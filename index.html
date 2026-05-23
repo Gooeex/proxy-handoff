@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Proxy — Implementation Handoff</title>
+  <style>
+    :root {
+      --bg: #f7f3eb;
+      --surface: #ffffff;
+      --text: #1f2a3f;
+      --muted: #6b7280;
+      --border: rgba(31, 42, 63, .12);
+      --accent: #5e78a6;
+      --accent-hover: #4a6592;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 48px 24px;
+      font: 16px/1.55 -apple-system, "system-ui", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 8px; }
+    .lede { color: var(--muted); margin: 0 0 32px; font-size: 15px; }
+    .section { margin: 32px 0 0; }
+    .section-title {
+      font-size: 11px; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--muted); margin: 0 0 12px;
+    }
+    .card-list { display: grid; gap: 10px; }
+    .card {
+      display: block;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color .12s, transform .12s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .card-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .card-desc { color: var(--muted); font-size: 13.5px; }
+    .arrow { color: var(--accent); font-weight: 400; }
+    .note {
+      margin-top: 40px; padding: 16px 20px;
+      background: rgba(94, 120, 166, .06);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      color: var(--muted); font-size: 14px;
+    }
+    .note strong { color: var(--text); }
+    code {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 13px;
+      background: rgba(31, 42, 63, .06);
+      padding: 1px 6px; border-radius: 4px;
+    }
+    .footer {
+      margin-top: 48px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px; color: var(--muted);
+      text-align: center;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Proxy — Implementation Handoff</h1>
+    <p class="lede">
+      Clickable prototypes and implementation docs for a SaaS proxy-subscription product.
+      Stack target: Railway + Supabase.
+    </p>
+
+    <div class="section">
+      <div class="section-title">Prototypes (UX spec — click through)</div>
+      <div class="card-list">
+        <a class="card" href="prototypes/client-panel.html">
+          <div class="card-title">Client portal <span class="arrow">→</span></div>
+          <div class="card-desc">Buyer-facing surface. Demo: <code>demo@example.com</code> / <code>demo1234</code></div>
+        </a>
+        <a class="card" href="prototypes/admin-panel.html">
+          <div class="card-title">Admin panel <span class="arrow">→</span></div>
+          <div class="card-desc">Operator surface. Dashboard / Orders / Renewals / Payments / Plans / Proxies / Clients / Audit / Settings.</div>
+        </a>
+        <a class="card" href="prototypes/design-system-reference.html">
+          <div class="card-title">Design system reference <span class="arrow">→</span></div>
+          <div class="card-desc">Tokens (typography, spacing, color) shared by both surfaces. Components shown are mostly admin-side — see README note on client adaptations.</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Documentation</div>
+      <div class="card-list">
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/blob/main/README.md">
+          <div class="card-title">README <span class="arrow">→</span></div>
+          <div class="card-desc">Repo overview, quick start, navigation, workflow.</div>
+        </a>
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/blob/main/DEV_BRIEF.md">
+          <div class="card-title">DEV_BRIEF <span class="arrow">→</span></div>
+          <div class="card-desc">Master implementation brief — read this first. Build target, what to preserve, what NOT to do, Phase 1 scope.</div>
+        </a>
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/blob/main/ADMIN_HANDOFF.md">
+          <div class="card-title">ADMIN_HANDOFF <span class="arrow">→</span></div>
+          <div class="card-desc">Admin-side data model, entity lifecycle, validation contracts.</div>
+        </a>
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/blob/main/DECISIONS.md">
+          <div class="card-title">DECISIONS <span class="arrow">→</span></div>
+          <div class="card-desc">Product decisions from the 2026-05-23 audit. Stage 1.5 backend contracts.</div>
+        </a>
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/blob/main/LIFECYCLE_CONTRACT.md">
+          <div class="card-title">LIFECYCLE_CONTRACT <span class="arrow">→</span></div>
+          <div class="card-desc">State-machine contracts for Order / Payment / Proxy. Sign off before mutation code.</div>
+        </a>
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/blob/main/ROADMAP.md">
+          <div class="card-title">ROADMAP <span class="arrow">→</span></div>
+          <div class="card-desc">v1 / v1.5 / v2 split — what's ready, what's pending, what's parked.</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Workflow</div>
+      <div class="card-list">
+        <a class="card" href="https://github.com/Gooeex/proxy-handoff/issues">
+          <div class="card-title">Issues — 18 open <span class="arrow">→</span></div>
+          <div class="card-desc">Phase 0 (setup) · Phase 1 (MVP) · Phase 1.5 (backend gaps). Filter by label.</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Note:</strong> the HTML files in <code>prototypes/</code> are <strong>clickable specifications</strong>, not production code. State persists to <code>localStorage</code>, data is seeded mock. Do not deploy them as-is.
+    </div>
+
+    <div class="footer">
+      <a href="https://github.com/Gooeex/proxy-handoff">github.com/Gooeex/proxy-handoff</a>
+    </div>
+  </div>
+</body>
+</html>

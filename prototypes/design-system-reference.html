@@ -1,0 +1,1894 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Panel — Design Code v2.7</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     :root TOKENS — copied verbatim from prototype.html (lines 19–98)
+     so every swatch / specimen renders exactly as it does in the live
+     Dashboard. If a token here drifts from prototype.html, the doc
+     stops being canonical — keep them locked.
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --bg:           #11141d;
+    --surface:      #1a1f2c;
+    --surface-2:    #232938;
+    --surface-3:    #2c3344;
+    --bg-hover:     #2a3142;
+    --border:        #353c4f;
+    --border-subtle: #2a3142;
+    --border-strong: #475068;
+    --text:           #f0f3f9;
+    --text-secondary: #c2cadd;
+    --muted:          #9ba4ba;
+    --text-disabled:  #69718a;
+    --accent:        #5b8cff;
+    --accent-hover:  #3f71ff;
+    --accent-dim:    rgba(91,140,255,.12);
+    --accent-subtle: rgba(91,140,255,.06);
+    --success:     #3ccf8e;
+    --success-dim: rgba(60,207,142,.12);
+    --warning:     #ffb84d;
+    --warning-dim: rgba(255,184,77,.12);
+    --danger:      #ef4444;
+    --danger-dim:  rgba(239,68,68,.12);
+    --info:        #5b8cff;
+    --info-dim:    rgba(91,140,255,.12);
+    --violet:      #a78bfa;
+    --violet-dim:  rgba(167,139,250,.14);
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --row-divider-inset: 20px;
+    --table-cell-pad-x:        16px;
+    --table-edge-cap:          32px;
+    --anchor-id:     164px;
+    --anchor-date:   164px;
+    --anchor-status: 144px;
+    --anchor-text:   168px;
+  }
+
+  /* ─── DOC LAYOUT ─────────────────────────────────────────────────── */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 13px; line-height: 1.55;
+    padding: 32px 36px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .doc-header {
+    margin: 0 0 36px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-title {
+    font-size: 24px; font-weight: 650; letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .doc-meta {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    color: var(--muted); font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .doc-meta strong { color: var(--text-secondary); font-weight: 600; }
+  .doc-meta .pill {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-dim); color: var(--accent);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  .doc-scope {
+    color: var(--text-secondary); font-size: 13px;
+    max-width: 820px;
+  }
+  .doc-scope code {
+    background: var(--surface-2); padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--text);
+  }
+
+  /* ─── TOC ────────────────────────────────────────────────────────── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 22px;
+    margin: 0 0 32px;
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 650;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--text-disabled);
+    margin-bottom: 12px;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px 24px;
+  }
+  .toc-grid a {
+    color: var(--text-secondary); text-decoration: none;
+    font-size: 12.5px;
+    padding: 3px 0;
+    border-bottom: 1px dashed transparent;
+  }
+  .toc-grid a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ─── SECTION ────────────────────────────────────────────────────── */
+  section.s {
+    margin: 0 0 44px;
+    padding: 26px 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  section.s.exception {
+    border-color: var(--danger);
+    background: linear-gradient(180deg, rgba(239,68,68,.04) 0%, var(--surface) 60%);
+  }
+  .s-h {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: 0 0 6px;
+    flex-wrap: wrap;
+  }
+  .s-num {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--accent);
+    letter-spacing: .04em;
+  }
+  .s-title { font-size: 18px; font-weight: 650; margin: 0; }
+  .s-tag {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--danger-dim); color: var(--danger);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .s-intro {
+    color: var(--muted); font-size: 13px;
+    max-width: 820px;
+    margin: 0 0 22px;
+  }
+
+  /* ─── SUBSECTION ─────────────────────────────────────────────────── */
+  .ss { margin: 0 0 28px; }
+  .ss:last-child { margin-bottom: 0; }
+  .ss-h {
+    font-size: 14px; font-weight: 650; letter-spacing: -.005em;
+    margin: 0 0 10px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .ss-num {
+    color: var(--text-disabled);
+    font-family: var(--font-mono); font-size: 12px;
+    font-weight: 600;
+  }
+  .ss-desc {
+    color: var(--muted); font-size: 12.5px;
+    margin: 0 0 14px;
+    max-width: 760px;
+  }
+
+  /* ─── EXAMPLE FRAME (visual + rule side-by-side) ─────────────────── */
+  .ex {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 18px;
+    align-items: stretch;
+  }
+  @media (max-width: 1100px) {
+    .ex { grid-template-columns: 1fr; }
+  }
+  .ex-visual {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    display: flex; flex-direction: column; justify-content: center;
+    min-height: 120px;
+  }
+  .ex-visual.compact { padding: 14px; min-height: auto; }
+  .ex-visual.flush { padding: 0; overflow: hidden; }
+  .ex-spec {
+    background: rgba(0,0,0,.18);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .ex-spec dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 12px;
+    row-gap: 5px;
+  }
+  .ex-spec dt {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: .04em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .ex-spec dd {
+    margin: 0; color: var(--text);
+    font-family: var(--font-mono); font-size: 12px;
+  }
+  .ex-spec dd .var {
+    color: var(--accent);
+  }
+
+  /* ─── CODE BLOCK ─────────────────────────────────────────────────── */
+  pre.code {
+    background: rgba(0,0,0,.28);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin: 14px 0 0;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+  pre.code .k { color: var(--accent); }       /* keyword / selector */
+  pre.code .p { color: var(--violet); }       /* property */
+  pre.code .v { color: var(--success); }      /* value */
+  pre.code .c { color: var(--text-disabled); font-style: italic; }  /* comment */
+  pre.code .t { color: var(--warning); }      /* token name */
+
+  /* ─── COLOR SWATCH GRID ──────────────────────────────────────────── */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .sw {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .sw-chip {
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sw-meta {
+    padding: 10px 12px;
+  }
+  .sw-token {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--text);
+    display: block;
+  }
+  .sw-hex {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    display: block;
+  }
+  .sw-use {
+    color: var(--text-disabled); font-size: 11px;
+    margin-top: 4px; line-height: 1.45;
+  }
+
+  /* ─── TYPE RAMP ──────────────────────────────────────────────────── */
+  .type-row {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-spec {
+    color: var(--muted); font-size: 12px;
+    font-family: var(--font-mono);
+  }
+  .type-spec .role {
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-weight: 600; font-size: 13px;
+    display: block; margin-bottom: 3px;
+  }
+
+  /* Rendered specimens — exact rules from prototype */
+  .specimen-panel-title { font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: var(--text-disabled); }
+  .specimen-thead       { font-size: 11px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .specimen-body        { font-size: 13px; color: var(--text-secondary); }
+  .specimen-body-muted  { font-size: 13px; color: var(--muted); }
+  .specimen-link        { font-size: 13px; font-weight: 500; color: var(--accent); cursor: pointer; }
+  .specimen-link:hover  { text-decoration: underline; text-underline-offset: 3px; }
+  .specimen-widget-lbl  { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+  .specimen-widget-cnt  { font-size: 13px; font-weight: 650; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .specimen-kpi-value   { font-size: 15px; font-weight: 650; color: var(--text); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .specimen-help-badge  {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--surface-2); color: var(--muted);
+    font-family: var(--font-sans); font-size: 9.5px; font-weight: 600;
+    line-height: 1;
+  }
+  .specimen-tooltip {
+    display: inline-block;
+    background: var(--surface-2); color: var(--text);
+    padding: 16px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-strong);
+    font-size: 14px; font-weight: 500; line-height: 1.55;
+    max-width: 320px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.55);
+  }
+  .specimen-form-select {
+    display: inline-flex; align-items: center;
+    height: 32px; padding: 0 28px 0 11px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text); font-size: 12.5px;
+    cursor: pointer;
+  }
+  .specimen-sidebar-section {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ─── SPACING/RADIUS RAILS ───────────────────────────────────────── */
+  .rail-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
+  .rail {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    text-align: center;
+  }
+  .rail-bar {
+    height: 22px; background: var(--accent);
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    opacity: .85;
+  }
+  .rail-label { font-family: var(--font-mono); font-size: 11px; color: var(--text); }
+  .rail-use { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .rail-radius {
+    width: 60px; height: 60px;
+    background: var(--surface-3);
+    margin: 0 auto 8px;
+    border: 1px solid var(--border-strong);
+  }
+
+  /* ─── DEMO PANEL (real Dashboard panel rendering) ────────────────── */
+  .demo-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .demo-panel-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-subtle);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .demo-panel-title {
+    font-size: 11px; font-weight: 650;
+    color: var(--text-disabled);
+    letter-spacing: .14em; text-transform: uppercase;
+  }
+  .demo-panel-title::before {
+    content: ''; display: inline-block; vertical-align: middle;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 4px 1px rgba(91,140,255,.85), 0 0 8px rgba(91,140,255,.4);
+    margin-right: 8px;
+    position: relative; top: -1px;
+  }
+  .demo-panel-action {
+    font-size: 11px; font-weight: 500; color: var(--accent); cursor: pointer;
+  }
+  .demo-panel-action:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .demo-panel-body { padding: 20px; color: var(--text-secondary); font-size: 13px; }
+
+  /* ─── DEMO TABLE (.dt simulation) ─────────────────────────────────── */
+  .demo-dt {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .demo-dt thead th {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .demo-dt thead th.center { text-align: center; }
+  .demo-dt thead th:first-child { padding-left: var(--table-edge-cap); }
+  .demo-dt thead th:last-child  { padding-right: var(--table-edge-cap); }
+  .demo-dt tbody tr {
+    background-image: linear-gradient(var(--border-subtle), var(--border-subtle));
+    background-repeat: no-repeat;
+    background-position: var(--table-edge-cap) 100%;
+    background-size: calc(100% - calc(var(--table-edge-cap) * 2)) 1px;
+    transition: background-color .1s;
+  }
+  .demo-dt tbody tr:last-child { background-image: none; }
+  .demo-dt tbody tr:hover { background-color: var(--bg-hover); }
+  .demo-dt tbody td {
+    padding: 12px 16px;
+    font-size: 13px; color: var(--text-secondary);
+    vertical-align: middle; white-space: nowrap;
+  }
+  .demo-dt tbody td:first-child { padding-left: var(--table-edge-cap); }
+  .demo-dt tbody td:last-child  { padding-right: var(--table-edge-cap); }
+  .demo-dt tbody td.center { text-align: center; }
+  .demo-dt tbody td.col-id { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .demo-dt tbody td.col-num,
+  .demo-dt tbody td.col-money,
+  .demo-dt tbody td.col-date {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .demo-dt .td-link {
+    color: var(--accent); font-weight: 500; cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .demo-dt .td-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ─── DEMO CHIP ──────────────────────────────────────────────────── */
+  .demo-chip {
+    display: inline-flex; align-items: center;
+    padding: 1px 8px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600; line-height: 1.45;
+    letter-spacing: .02em; white-space: nowrap;
+  }
+  .demo-chip.paid    { color: var(--success); background: var(--success-dim); }
+  .demo-chip.pending { color: var(--warning); background: var(--warning-dim); }
+  .demo-chip.active  { color: var(--success); background: var(--success-dim); }
+  .demo-chip.expired { color: var(--muted);   background: var(--surface-2); }
+  .demo-chip.faulty  { color: var(--danger);  background: var(--danger-dim); }
+  .demo-chip.assigned{ color: var(--accent);  background: var(--accent-dim); }
+
+  .demo-cap {
+    display: inline-flex; align-items: center;
+    padding: 1px 8px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600; line-height: 1.45;
+    letter-spacing: .02em; white-space: nowrap;
+  }
+  .demo-cap.available       { background: rgba(60,207,142,.10); color: var(--success); }
+  .demo-cap.sold-out        { background: rgba(239,68,68,.10);  color: var(--danger);  }
+  .demo-cap.blocked-grace   { background: rgba(255,184,77,.09); color: var(--warning); }
+  .demo-cap.waiting-release { background: var(--surface-2);     color: var(--muted);   }
+  .demo-cap.low             { background: rgba(255,184,77,.05); color: var(--warning); }
+
+  /* ─── DEMO WIDGET ROW ────────────────────────────────────────────── */
+  .demo-widget {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .demo-widget .row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    background-image: linear-gradient(var(--border-subtle), var(--border-subtle));
+    background-repeat: no-repeat;
+    background-position: var(--row-divider-inset) 100%;
+    background-size: calc(100% - calc(var(--row-divider-inset) * 2)) 1px;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .demo-widget .row:last-child { background-image: none; }
+  .demo-widget .row:hover { background: var(--bg-hover); }
+  .demo-widget .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .demo-widget .lbl {
+    font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); flex: 1;
+  }
+  .demo-widget .cnt {
+    font-size: 13px; font-weight: 650;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── DEMO KPI CARD ──────────────────────────────────────────────── */
+  .demo-kpi-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .demo-kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 16px 6px;
+    min-height: 90px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .demo-kpi .lbl {
+    font-size: 11px; font-weight: 650; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--text-disabled);
+    text-align: center;
+  }
+  .demo-kpi .val {
+    font-size: 15px; font-weight: 650;
+    line-height: 1; font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+    text-align: center;
+    margin-top: auto;
+  }
+  .demo-kpi .bar {
+    height: 2px; margin-top: 0; margin-bottom: 2px;
+    border-radius: 2px;
+  }
+  .demo-kpi .bar.green   { background: linear-gradient(90deg, rgba(60,207,142,0) 0%, rgba(60,207,142,.36) 18%, rgba(60,207,142,.36) 82%, rgba(60,207,142,0) 100%); box-shadow: 0 0 5px rgba(60,207,142,.14); }
+  .demo-kpi .bar.violet  { background: linear-gradient(90deg, rgba(167,139,250,0) 0%, rgba(167,139,250,.36) 18%, rgba(167,139,250,.36) 82%, rgba(167,139,250,0) 100%); box-shadow: 0 0 5px rgba(167,139,250,.14); }
+  .demo-kpi .bar.orange  { background: linear-gradient(90deg, rgba(255,184,77,0) 0%, rgba(255,184,77,.36) 18%, rgba(255,184,77,.36) 82%, rgba(255,184,77,0) 100%); box-shadow: 0 0 5px rgba(255,184,77,.14); }
+  .demo-kpi .val.tone-success { color: var(--success); }
+  .demo-kpi .val.tone-violet  { color: var(--violet); }
+  .demo-kpi .val.tone-warning { color: var(--warning); }
+
+  /* ─── DEMO SIDEBAR ───────────────────────────────────────────────── */
+  .demo-sidebar {
+    width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 0;
+  }
+  .demo-sidebar .sec {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent);
+    padding: 14px 16px 6px;
+  }
+  .demo-sidebar .item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px;
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    position: relative;
+  }
+  .demo-sidebar .item:hover {
+    background: var(--bg-hover); color: var(--text-secondary);
+  }
+  .demo-sidebar .item.active {
+    color: var(--text); font-weight: 600;
+    background: var(--surface-3);
+  }
+  .demo-sidebar .item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+  .demo-sidebar .icon {
+    width: 16px; height: 16px;
+    opacity: .55;
+    flex-shrink: 0;
+  }
+  .demo-sidebar .item.active .icon { opacity: 1; }
+
+  /* ─── CALLOUT ─────────────────────────────────────────────────────── */
+  .callout {
+    background: var(--accent-subtle);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    margin: 14px 0;
+  }
+  .callout strong { color: var(--text); font-weight: 600; }
+  .callout.warn {
+    background: var(--danger-dim);
+    border-left-color: var(--danger);
+  }
+  .callout.warn strong { color: var(--danger); }
+
+  /* ─── INLINE TOKEN ─────────────────────────────────────────────────── */
+  .tok {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  /* ─── PATTERN TABLE ─────────────────────────────────────────────────── */
+  .pat-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 14px;
+  }
+  .pat-table th, .pat-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 12.5px;
+  }
+  .pat-table th {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .pat-table td.mono {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--text);
+  }
+  .pat-table td .yes { color: var(--success); font-weight: 600; }
+  .pat-table td .no  { color: var(--danger); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1 class="doc-title">Admin Panel — Design Code v2.7</h1>
+  <div class="doc-meta">
+    <span><strong>Version</strong> 2.7.0</span>
+    <span><strong>Frozen</strong> 2026-05-19</span>
+    <span><strong>Source</strong> Dashboard (<code style="font-family:var(--font-mono);font-size:12px;color:var(--text)">data-page="dashboard"</code>)</span>
+    <span class="pill">Canonical</span>
+  </div>
+  <p class="doc-scope">
+    This document captures every typographic, geometric, and behavioral rule established on the Dashboard
+    through ~15 iterations. <strong>Treat it as canonical</strong> for every list page, detail page, and form
+    surface in the prototype, except where flagged <code>DASHBOARD-LOCAL</code>. Migration to other pages
+    happens page-by-page (see §6) after sign-off.
+  </p>
+</div>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <div class="toc-grid">
+    <a href="#s1">1 · Foundation</a>
+    <a href="#s2">2 · Layout &amp; geometry</a>
+    <a href="#s3">3 · Components</a>
+    <a href="#s4">4 · Patterns</a>
+    <a href="#s5">5 · Dashboard-local exceptions</a>
+    <a href="#s6">6 · Migration plan</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     §1 FOUNDATION
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s" id="s1">
+  <div class="s-h">
+    <span class="s-num">§1</span>
+    <h2 class="s-title">Foundation</h2>
+  </div>
+  <p class="s-intro">
+    Tokens, type ramp, spacing, radii, borders, and motion. Foundation primitives are already centralised
+    in <code style="font-family:var(--font-mono);background:var(--surface-2);padding:1px 5px;border-radius:3px;font-size:12px">:root</code>
+    in <code style="font-family:var(--font-mono);background:var(--surface-2);padding:1px 5px;border-radius:3px;font-size:12px">prototype.html</code>
+    — every rule below references a token, never a literal hex.
+  </p>
+
+  <!-- 1.1 PALETTE -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">1.1</span> Color palette</h3>
+    <p class="ss-desc">
+      18 tokens consumed on the Dashboard. <strong>Surface scale</strong> (bg → surface → surface-2 → surface-3)
+      defines z-depth; <strong>border scale</strong> tracks visual separation strength;
+      <strong>text scale</strong> (text → text-secondary → muted → text-disabled) carries hierarchy without
+      relying on weight alone. Semantic colors (success/warning/danger/violet) and the accent are reserved for
+      states and links — never decorative.
+    </p>
+    <div class="swatches">
+      <div class="sw"><div class="sw-chip" style="background:var(--bg)"></div><div class="sw-meta"><span class="sw-token">--bg</span><span class="sw-hex">#11141d</span><div class="sw-use">Page background</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--surface)"></div><div class="sw-meta"><span class="sw-token">--surface</span><span class="sw-hex">#1a1f2c</span><div class="sw-use">Panel / card / KPI background</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--surface-2)"></div><div class="sw-meta"><span class="sw-token">--surface-2</span><span class="sw-hex">#232938</span><div class="sw-use">Inputs, tooltip, help-tip badge</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--surface-3)"></div><div class="sw-meta"><span class="sw-token">--surface-3</span><span class="sw-hex">#2c3344</span><div class="sw-use">Sidebar active item bg</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--bg-hover)"></div><div class="sw-meta"><span class="sw-token">--bg-hover</span><span class="sw-hex">#2a3142</span><div class="sw-use">Row / nav hover background</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--border)"></div><div class="sw-meta"><span class="sw-token">--border</span><span class="sw-hex">#353c4f</span><div class="sw-use">Panel borders</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--border-subtle)"></div><div class="sw-meta"><span class="sw-token">--border-subtle</span><span class="sw-hex">#2a3142</span><div class="sw-use">Inset row dividers, header bottom</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--border-strong)"></div><div class="sw-meta"><span class="sw-token">--border-strong</span><span class="sw-hex">#475068</span><div class="sw-use">Hover border, tooltip border</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--text)"></div><div class="sw-meta"><span class="sw-token">--text</span><span class="sw-hex">#f0f3f9</span><div class="sw-use">Primary text · KPI value</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--text-secondary)"></div><div class="sw-meta"><span class="sw-token">--text-secondary</span><span class="sw-hex">#c2cadd</span><div class="sw-use">Body cells · widget labels</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--muted)"></div><div class="sw-meta"><span class="sw-token">--muted</span><span class="sw-hex">#9ba4ba</span><div class="sw-use">Headers · numerics · counts</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--text-disabled)"></div><div class="sw-meta"><span class="sw-token">--text-disabled</span><span class="sw-hex">#69718a</span><div class="sw-use">Panel-title · KPI-label</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--accent)"></div><div class="sw-meta"><span class="sw-token">--accent</span><span class="sw-hex">#5b8cff</span><div class="sw-use">Entity links · panel-action · accent dot</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--accent-dim)"></div><div class="sw-meta"><span class="sw-token">--accent-dim</span><span class="sw-hex">rgba(91,140,255,.12)</span><div class="sw-use">Tag pill · help-tip hover bg</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--success)"></div><div class="sw-meta"><span class="sw-token">--success</span><span class="sw-hex">#3ccf8e</span><div class="sw-use">Paid · Active · Available chips</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--warning)"></div><div class="sw-meta"><span class="sw-token">--warning</span><span class="sw-hex">#ffb84d</span><div class="sw-use">Pending · Grace · Maintenance dot</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--danger)"></div><div class="sw-meta"><span class="sw-token">--danger</span><span class="sw-hex">#ef4444</span><div class="sw-use">Faulty · Sold-out · KPI red tone</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--violet)"></div><div class="sw-meta"><span class="sw-token">--violet</span><span class="sw-hex">#a78bfa</span><div class="sw-use">KPI violet tone (clients / orders)</div></div></div>
+    </div>
+  </div>
+
+  <!-- 1.2 TYPE RAMP -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">1.2</span> Typography ramp</h3>
+    <p class="ss-desc">
+      One sans family for everything readable; one mono family for IDs, dates, and numerics.
+      <strong>13px is the body baseline</strong>; everything else either steps down (12 metadata, 11 labels,
+      10/10.5 chips) or up (15 KPI value). Two emphasis modes only: weight 500 = active text/links,
+      weight 650 = section / KPI / count.
+    </p>
+
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Panel title · KPI label</span>11 / 650 · .14em uppercase · text-disabled</div>
+      <div><span class="specimen-panel-title">RECENT ORDERS</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Table header</span>11 / 500 · .05em uppercase · muted</div>
+      <div><span class="specimen-thead">ORDER ID</span> &nbsp; <span class="specimen-thead">CLIENT ID</span> &nbsp; <span class="specimen-thead">PLAN</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Body cell · primary</span>13 · text-secondary</div>
+      <div><span class="specimen-body">Marcus Chen</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Body cell · muted reference</span>13 · muted · see §4.6</div>
+      <div><span class="specimen-body-muted">Verizon · 30d · East</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Entity link</span>13 / 500 · accent · underline-on-hover (offset 3)</div>
+      <div><span class="specimen-link">ORD-10847</span> &nbsp; <span class="specimen-link">CLI-2184</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Widget label</span>13 / 500 · text-secondary</div>
+      <div><span class="specimen-widget-lbl">Faulty / offline</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Widget count</span>13 / 650 · muted · tabular-nums</div>
+      <div><span class="specimen-widget-cnt">12</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">KPI value</span>15 / 650 · -.01em · tabular-nums · centered</div>
+      <div><span class="specimen-kpi-value">$57.3K</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Help-tip badge</span>9.5 / 600 · 13×13 round · surface-2/muted</div>
+      <div><span class="specimen-help-badge">i</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Help-floater (tooltip)</span>14 / 500 · 1.55 line-height · surface-2/text · 320 max-width</div>
+      <div>
+        <span class="specimen-tooltip">
+          One Capacity State label per plan. Default is Available; the priority order for non-default states is Sold out → Blocked by grace → Waiting release → Low availability.
+        </span>
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Form select</span>12.5 · surface-2 · 32px height · accent on focus</div>
+      <div><span class="specimen-form-select">All carriers ▾</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Sidebar nav-item</span>13 / 500 · muted (active 600 / text)</div>
+      <div><span style="color:var(--muted);font-size:13px;font-weight:500">Orders</span> &nbsp; <span style="color:var(--text);font-size:13px;font-weight:600">Dashboard</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-spec"><span class="role">Sidebar section label</span>10 / 600 · .08em uppercase · accent</div>
+      <div><span class="specimen-sidebar-section">Operations</span></div>
+    </div>
+  </div>
+
+  <!-- 1.3 SPACING -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">1.3</span> Spacing scale — <strong style="color:var(--accent)">strict 4px grid</strong></h3>
+    <p class="ss-desc">
+      Every padding, gap, and margin in the prototype must land on a 4px step:
+      <code>4 · 8 · 12 · 16 · 20 · 24 · 28 · 32 · 36 · 40</code>.
+      Values like 6, 9, 10, 11, 14, 30 are <strong>not allowed</strong> — they were the accumulation that
+      v1.0 inherited and v1.1 cleaned up. If a new component asks for "just a touch more" — round to the
+      nearest grid step, never invent a half-step.
+    </p>
+    <div class="rail-grid">
+      <div class="rail"><div class="rail-bar" style="width:4px"></div><div class="rail-label">4px</div><div class="rail-use">tight gaps · kpi-footer · help-tip margin</div></div>
+      <div class="rail"><div class="rail-bar" style="width:8px"></div><div class="rail-label">8px</div><div class="rail-use">chip / cap-label h-pad · nav-item v-pad · accent-dot margin · sidebar-section bottom</div></div>
+      <div class="rail"><div class="rail-bar" style="width:12px"></div><div class="rail-label">12px</div><div class="rail-use">td v-pad · widget-row v-pad · flex gaps (rows, kpi, nav, sidebar) · panel-header gap · panel.tight v-pad</div></div>
+      <div class="rail"><div class="rail-bar" style="width:16px"></div><div class="rail-label">16px</div><div class="rail-use">td h-pad · panel-header v · kpi-card pad · tooltip pad · sidebar-footer h-pad</div></div>
+      <div class="rail"><div class="rail-bar" style="width:20px"></div><div class="rail-label">20px</div><div class="rail-use">panel-header h · panel-body · row-divider-inset · widget-row h-pad · sidebar-section h-pad</div></div>
+      <div class="rail"><div class="rail-bar" style="width:24px"></div><div class="rail-label">24px</div><div class="rail-use">larger surface gaps</div></div>
+      <div class="rail"><div class="rail-bar" style="width:28px"></div><div class="rail-label">28px</div><div class="rail-use">larger surface gaps</div></div>
+      <div class="rail"><div class="rail-bar" style="width:32px"></div><div class="rail-label">32px</div><div class="rail-use">--table-edge-cap · topbar h-pad</div></div>
+    </div>
+
+    <div class="callout">
+      <strong>Hairline allowance.</strong> 1px / 2px / 3px are permitted ONLY for visual artifacts that aren't
+      conceptually "spacing": borders (1px), accent bars (2px), divider lines, accent-dot glow halos, micro
+      tag v-padding (e.g. <code>.chip { padding: 1px 8px }</code> where the 1 is intentional pill compactness).
+      Hairlines are a different visual register and don't pollute the grid.
+    </div>
+
+    <div class="callout">
+      <strong>What's NOT on the 4px grid (by design).</strong>
+      <strong style="color:var(--text)">Type sizes</strong> follow a modular scale (10, 11, 12.5, 13, 14, 15) calibrated for
+      legibility — they answer a different question and live on a separate scale. Same for
+      <strong style="color:var(--text)">radii</strong> (<code>--radius-sm: 6</code>, <code>--radius-md: 10</code>,
+      <code>--radius-lg: 14</code>) — corner softness is a perceptual register, not a spacing register.
+      Both are out of scope for the 4px-grid rule.
+    </div>
+
+    <div class="callout">
+      <strong>The single intentional exception.</strong>
+      <code>.kpi-card</code> uses asymmetric <code>padding: 16px 16px 6px</code> — the 6px bottom is
+      hand-tuned to sink the accent bar to the card's base as a "foundation line"
+      (see <a href="#s5" style="color:var(--accent);text-decoration:none">§5.1</a>). DASHBOARD-LOCAL only —
+      no other component is allowed to break grid for aesthetic reasons.
+    </div>
+  </div>
+
+  <!-- 1.4 RADII -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">1.4</span> Radii</h3>
+    <p class="ss-desc">Three radii cover everything. <strong>sm</strong> for chips/buttons, <strong>md</strong> for inputs/tooltips, <strong>lg</strong> for panels and cards.</p>
+    <div class="rail-grid">
+      <div class="rail"><div class="rail-radius" style="border-radius:var(--radius-sm)"></div><div class="rail-label">--radius-sm · 6px</div><div class="rail-use">chip · button · accent bar</div></div>
+      <div class="rail"><div class="rail-radius" style="border-radius:var(--radius-md)"></div><div class="rail-label">--radius-md · 10px</div><div class="rail-use">input · tooltip · code block</div></div>
+      <div class="rail"><div class="rail-radius" style="border-radius:var(--radius-lg)"></div><div class="rail-label">--radius-lg · 14px</div><div class="rail-use">panel · card · KPI</div></div>
+    </div>
+  </div>
+
+  <!-- 1.5 BORDERS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">1.5</span> Borders</h3>
+    <p class="ss-desc">All borders are 1px solid. Three weights, distinguished by color, never by stroke width.</p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text-secondary);font-size:12.5px">1px solid var(--border) · panel containers</div>
+        <div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:6px;padding:10px 14px;color:var(--text-secondary);font-size:12.5px">1px solid var(--border-subtle) · header bottom · row dividers</div>
+        <div style="background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;padding:10px 14px;color:var(--text-secondary);font-size:12.5px">1px solid var(--border-strong) · hover · tooltip</div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Default</dt><dd>1px solid <span class="var">--border</span></dd>
+          <dt>Subtle</dt><dd>1px solid <span class="var">--border-subtle</span></dd>
+          <dt>Strong</dt><dd>1px solid <span class="var">--border-strong</span></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1.6 EFFECTS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">1.6</span> Effects · transitions · accents</h3>
+    <p class="ss-desc">
+      Motion is purely functional — never decorative. All durations are short (.1s–.15s) and limited to
+      <code>background</code>, <code>border-color</code>, <code>color</code>, and <code>transform</code>.
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;flex-direction:column;gap:18px;align-items:flex-start">
+        <div>
+          <span style="font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase">Hover</span>
+          <div style="margin-top:6px"><span class="specimen-link">View order →</span> <span style="color:var(--text-disabled);font-size:11px;margin-left:8px">underline-offset 3px</span></div>
+        </div>
+        <div>
+          <span style="font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase">Panel-title accent dot</span>
+          <div style="margin-top:6px"><span class="demo-panel-title">RECENT ORDERS</span></div>
+          <div style="color:var(--text-disabled);font-size:11px;margin-top:4px">5px core · dual halo (4×1 inner @ .85, 8 outer @ .4)</div>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Widget hover</dt><dd>background .1s</dd>
+          <dt>Nav hover</dt><dd>background .12s, color .12s</dd>
+          <dt>KPI hover</dt><dd>border-color .15s, background .15s, transform .15s</dd>
+          <dt>Link hover</dt><dd>text-decoration: underline · text-underline-offset: 3px</dd>
+          <dt>Active press</dt><dd>transform: translateY(1px) (kpi-card only)</dd>
+        </dl>
+      </div>
+    </div>
+<pre class="code"><span class="c">/* Panel title accent dot — dual-layer glow recipe */</span>
+<span class="k">.panel-title::before</span> {
+  <span class="p">content</span>: <span class="v">''</span>;
+  <span class="p">width</span>: <span class="v">5px</span>; <span class="p">height</span>: <span class="v">5px</span>; <span class="p">border-radius</span>: <span class="v">50%</span>;
+  <span class="p">background</span>: <span class="t">var(--accent)</span>;
+  <span class="p">box-shadow</span>:
+    <span class="v">0 0 4px 1px rgba(91,140,255,.85)</span>,    <span class="c">/* tight inner bloom */</span>
+    <span class="v">0 0 8px rgba(91,140,255,.4)</span>;        <span class="c">/* soft outer halo */</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     §2 LAYOUT & GEOMETRY
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s" id="s2">
+  <div class="s-h">
+    <span class="s-num">§2</span>
+    <h2 class="s-title">Layout &amp; geometry</h2>
+  </div>
+  <p class="s-intro">
+    Page-level grid, table edge caps, anchor-based column widths, and responsive padding. The
+    <strong>edge-cap rule</strong> and the <strong>anchor system</strong> are the two most distinctive
+    geometric contracts on the Dashboard — both must propagate to every other table page.
+  </p>
+
+  <!-- 2.1 PAGE WRAPPER -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">2.1</span> Page wrapper · grid-2col · panel container</h3>
+    <p class="ss-desc">
+      The Dashboard uses <code>grid-2col</code> (1fr + 320px aside) to split tables on the left and widgets
+      on the right. <code>--aside-w: 320px</code> is the canonical right-aside width across the app.
+    </p>
+<pre class="code"><span class="k">.grid-2col</span> {
+  <span class="p">display</span>: <span class="v">grid</span>;
+  <span class="p">grid-template-columns</span>: <span class="v">1fr <span class="t">var(--aside-w)</span></span>;
+  <span class="p">gap</span>: <span class="v">16px</span>;
+  <span class="p">align-items</span>: <span class="v">start</span>;
+}
+<span class="k">.grid-left</span>, <span class="k">.grid-right</span> {
+  <span class="p">display</span>: <span class="v">flex</span>; <span class="p">flex-direction</span>: <span class="v">column</span>; <span class="p">gap</span>: <span class="v">16px</span>;
+}</pre>
+  </div>
+
+  <!-- 2.2 EDGE CAP -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">2.2</span> Edge cap rule — two distinct contracts</h3>
+    <p class="ss-desc">
+      The Dashboard maintains two parallel "row-edge" tokens. They look similar but apply to different
+      contexts and <strong>must not be conflated</strong>:
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;flex-direction:column;gap:18px;align-items:stretch">
+        <div>
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px">Tables — <span class="tok">--table-edge-cap: 32px</span></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 0">
+            <div style="display:flex;align-items:center;height:32px;border-bottom:1px solid var(--border-subtle);padding:0 32px;font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase">Header label</div>
+            <div style="display:flex;align-items:center;height:40px;background-image:linear-gradient(var(--border-subtle),var(--border-subtle));background-repeat:no-repeat;background-position:32px 100%;background-size:calc(100% - 64px) 1px;padding:0 32px;font-size:13px;color:var(--text-secondary)">Cell content</div>
+            <div style="display:flex;align-items:center;height:40px;padding:0 32px;font-size:13px;color:var(--text-secondary)">Cell content</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px">Widget rows — <span class="tok">--row-divider-inset: 20px</span></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 0">
+            <div style="display:flex;align-items:center;height:40px;background-image:linear-gradient(var(--border-subtle),var(--border-subtle));background-repeat:no-repeat;background-position:20px 100%;background-size:calc(100% - 40px) 1px;padding:0 20px;font-size:13px;color:var(--text-secondary);gap:12px"><span style="width:5px;height:5px;border-radius:50%;background:var(--danger)"></span><span style="flex:1">Faulty / offline</span><span style="font-weight:650;color:var(--muted)">4</span></div>
+            <div style="display:flex;align-items:center;height:40px;padding:0 20px;font-size:13px;color:var(--text-secondary);gap:12px"><span style="width:5px;height:5px;border-radius:50%;background:var(--warning)"></span><span style="flex:1">Maintenance</span><span style="font-weight:650;color:var(--muted)">2</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Tables</dt><dd><span class="var">--table-edge-cap</span> = 32px</dd>
+          <dt></dt><dd>Applied: thead/tbody first/last child padding · row-divider gradient inset</dd>
+          <dt>Non-tables</dt><dd><span class="var">--row-divider-inset</span> = 20px</dd>
+          <dt></dt><dd>Applied: <code>.widget-row</code>, <code>.expiring-segment</code>, <code>.issue-row</code>, <code>.kv-row</code>, <code>.prov-step</code>, activity feeds</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>Why two tokens?</strong> Tables carry a higher density of structured data and benefit from
+      the more generous 32px breathing room. Widget rows are inherently shorter (single line, sparse content)
+      and pair better with a tighter 20px inset. Both appear visually correct in their respective contexts;
+      mixing them produces the wrong rhythm.
+    </div>
+<pre class="code"><span class="c">/* Table edge cap — single source of truth */</span>
+<span class="k">thead th:first-child</span> { <span class="p">padding-left</span>: <span class="t">var(--table-edge-cap)</span>; }
+<span class="k">thead th:last-child</span>  { <span class="p">padding-right</span>: <span class="t">var(--table-edge-cap)</span>; }
+<span class="k">tbody td:first-child</span> { <span class="p">padding-left</span>: <span class="t">var(--table-edge-cap)</span>; }
+<span class="k">tbody td:last-child</span>  { <span class="p">padding-right</span>: <span class="t">var(--table-edge-cap)</span>; }
+
+<span class="c">/* Inset row divider — same recipe in both tables and widget rows,
+   only the inset variable changes */</span>
+<span class="k">tbody tr</span> {
+  <span class="p">background-image</span>: <span class="v">linear-gradient(var(--border-subtle), var(--border-subtle))</span>;
+  <span class="p">background-repeat</span>: <span class="v">no-repeat</span>;
+  <span class="p">background-position</span>: <span class="t">var(--table-edge-cap)</span> <span class="v">100%</span>;
+  <span class="p">background-size</span>: <span class="v">calc(100% - calc(<span class="t">var(--table-edge-cap)</span> * 2)) 1px</span>;
+}
+<span class="k">tbody tr:last-child</span> { <span class="p">background-image</span>: <span class="v">none</span>; }</pre>
+  </div>
+
+  <!-- 2.3 ANCHOR SYSTEM -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">2.3</span> Anchor token system</h3>
+    <p class="ss-desc">
+      Tables fix the leftmost / rightmost columns to a pixel anchor; middle columns share the remaining
+      space proportionally by weight. <strong>Schema is fixed regardless of viewport</strong> — Order ID,
+      datetime, Plan name always read fully, no matter how the panel resizes.
+    </p>
+    <div class="ex">
+      <div class="ex-visual">
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+          <colgroup>
+            <col style="width:164px"><col style="width:auto"><col style="width:auto"><col style="width:164px">
+          </colgroup>
+          <tbody>
+            <tr>
+              <td style="background:var(--accent-dim);padding:16px 8px;text-align:center;color:var(--accent);font-family:var(--font-mono);font-size:11px;border-radius:4px 0 0 4px">164px<br><small style="opacity:.7">--anchor-id</small></td>
+              <td style="background:var(--surface-2);padding:16px 8px;text-align:center;color:var(--text-secondary);font-size:11px">middle · weight share</td>
+              <td style="background:var(--surface-2);padding:16px 8px;text-align:center;color:var(--text-secondary);font-size:11px">middle · weight share</td>
+              <td style="background:var(--accent-dim);padding:16px 8px;text-align:center;color:var(--accent);font-family:var(--font-mono);font-size:11px;border-radius:0 4px 4px 0">164px<br><small style="opacity:.7">--anchor-date</small></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>--anchor-id</dt><dd>164px · entity-link IDs (≤10 chars mono)</dd>
+          <dt>--anchor-date</dt><dd>164px · datetime "DD MMM · HH:MM"</dd>
+          <dt>--anchor-text</dt><dd>168px · Plan name / reference text</dd>
+          <dt>--anchor-status</dt><dd>144px · edge-anchored chip (left-aligned)</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>Sizing formula:</strong> anchor ≥ <code>content_max + 16 (inner pad) + 32 (edge cap) = content_max + 48</code>.
+      For "22 Apr · 09:42" (113px) → 113 + 48 = 161 → rounded up to <strong>164px</strong> (next 4-grid step) = <code>--anchor-id</code>.
+      Same calculation for "ORD-10900" (110px) → 158 → 164. 164px gives both a comfortable fit while keeping
+      centered content inside the row-divider boundary (which itself ends at the edge cap on each side).
+      All anchor values land on the 4px grid: 144 (36×4), 164 (41×4), 168 (42×4).
+    </div>
+<pre class="code"><span class="c">/* Markup pattern (Recent Orders, 7 cols, --col-total: 19) */</span>
+<span class="k">&lt;table class="dt" style="--anchor-l: var(--anchor-id); --anchor-r: var(--anchor-date); --col-total: 19"&gt;</span>
+  &lt;colgroup&gt;
+    &lt;col style="<span class="p">width</span>: <span class="t">var(--anchor-l)</span>"&gt;       <span class="c">/* 164px · Order ID */</span>
+    &lt;col style="<span class="t">--w</span>: 4"&gt;                       <span class="c">/* Client ID  · weight 4/19 */</span>
+    &lt;col style="<span class="t">--w</span>: 5"&gt;                       <span class="c">/* Plan       · weight 5/19 */</span>
+    &lt;col style="<span class="t">--w</span>: 3"&gt;                       <span class="c">/* Amount     · weight 3/19 */</span>
+    &lt;col style="<span class="t">--w</span>: 3"&gt;                       <span class="c">/* Payment    · weight 3/19 */</span>
+    &lt;col style="<span class="t">--w</span>: 4"&gt;                       <span class="c">/* Status     · weight 4/19 */</span>
+    &lt;col style="<span class="p">width</span>: <span class="t">var(--anchor-r)</span>"&gt;       <span class="c">/* 164px · Created date */</span>
+  &lt;/colgroup&gt;</pre>
+    <p class="ss-desc" style="margin-top:14px">
+      A small JS helper, <code>applyDtAnchors()</code>, runs on resize / ResizeObserver / cold-load.
+      It reads the table's <code>--anchor-l</code>, <code>--anchor-r</code>, and <code>--col-total</code>,
+      then computes <code>(wrapWidth − anchorL − anchorR) × w / total</code> for each middle <code>&lt;col&gt;</code>.
+      Anchored columns stay locked; middle columns redistribute precisely.
+    </p>
+  </div>
+
+  <!-- 2.4 CONTAINER QUERIES -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">2.4</span> Responsive inter-column padding</h3>
+    <p class="ss-desc">
+      Inner cell padding adapts to panel width via container queries. Edges always stay at 32px;
+      the inter-column padding flexes to keep the table readable on narrow panels and breathable on wide ones.
+    </p>
+    <div class="ex-spec" style="max-width:540px">
+      <dl>
+        <dt>Tight</dt><dd>--table-cell-pad-x-tight · 12px (panels &lt; 640px wide)</dd>
+        <dt>Default</dt><dd>--table-cell-pad-x · 16px</dd>
+        <dt>Loose</dt><dd>--table-cell-pad-x-loose · 20px (panels &gt; 1280px wide)</dd>
+        <dt>Edge</dt><dd>--table-edge-cap · 32px (always)</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     §3 COMPONENTS
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s" id="s3">
+  <div class="s-h">
+    <span class="s-num">§3</span>
+    <h2 class="s-title">Components</h2>
+  </div>
+  <p class="s-intro">
+    Concrete reusable pieces. Each one is presented with its <strong>rendered example</strong> on the left
+    (a real DOM clone of the Dashboard's markup, using the exact CSS rules from <code>prototype.html</code>)
+    and its <strong>spec sheet</strong> on the right.
+  </p>
+
+  <!-- 3.1 PANEL -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.1</span> Panel</h3>
+    <p class="ss-desc">
+      The single container for tables, widgets, and form sections. Header carries the section title (with the
+      blue accent dot) and an optional right-side action link.
+    </p>
+    <div class="ex">
+      <div class="ex-visual flush">
+        <div class="demo-panel">
+          <div class="demo-panel-header">
+            <span class="demo-panel-title">Recent Orders</span>
+            <span class="demo-panel-action">View all →</span>
+          </div>
+          <div class="demo-panel-body">Panel body — content goes here.</div>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Container</dt><dd>surface · 1px border · radius-lg · overflow:hidden</dd>
+          <dt>Header pad</dt><dd>16px 20px</dd>
+          <dt>Header bottom</dt><dd>1px solid border-subtle</dd>
+          <dt>Title</dt><dd>11/650 .14em uppercase text-disabled · ::before dot 5px accent + halo · margin-right 8</dd>
+          <dt>Action</dt><dd>11/500 accent · underline-on-hover (offset 3)</dd>
+          <dt>Body pad</dt><dd>20px (default) · 12px 20px (.tight)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.2 TABLE -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.2</span> Table system <code style="background:var(--surface-2);padding:1px 6px;border-radius:3px;font-family:var(--font-mono);font-size:12px">.dt</code></h3>
+    <p class="ss-desc">
+      The canonical table container. Drives column-type alignment, mono numerics, edge caps, row dividers,
+      and hover. Headers are uppercase 11/500/.05em muted. Body cells split in two tiers — primary at 13
+      text-secondary, muted reference at 13 muted (see §4.6). Numerics step down to 12 muted mono.
+    </p>
+
+    <div class="ex" style="margin-bottom:14px">
+      <div class="ex-visual flush" style="grid-column:1 / -1">
+        <table class="demo-dt">
+          <colgroup>
+            <col style="width:164px"><col style="width:164px"><col><col style="width:96px"><col style="width:164px">
+          </colgroup>
+          <thead><tr>
+            <th>Order ID</th><th>Client ID</th><th>Plan</th><th class="center">Amount</th><th class="center">Created</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="col-id"><a class="td-link">ORD-10847</a></td><td class="col-id"><a class="td-link">CLI-2184</a></td><td class="col-text muted">Verizon · 30d · East</td><td class="col-money center">$120</td><td class="col-date center">22 Apr · 09:42</td></tr>
+            <tr><td class="col-id"><a class="td-link">ORD-10846</a></td><td class="col-id"><a class="td-link">CLI-2071</a></td><td class="col-text muted">AT&amp;T · 90d · Central</td><td class="col-money center">$340</td><td class="col-date center">22 Apr · 09:18</td></tr>
+            <tr><td class="col-id"><a class="td-link">ORD-10845</a></td><td class="col-id"><a class="td-link">CLI-1948</a></td><td class="col-text muted">T-Mobile · 7d · West</td><td class="col-money center">$45</td><td class="col-date center">22 Apr · 08:55</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h4 style="font-size:13px;font-weight:650;margin:18px 0 8px">Column type vocabulary</h4>
+    <table class="pat-table">
+      <thead><tr><th>Class</th><th>Align</th><th>Family</th><th>Size · color</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">.col-id</td><td>left</td><td>mono · tabular</td><td>13 · inherit</td><td>Entity IDs (Order / Client / Proxy / Payment / Plan)</td></tr>
+        <tr><td class="mono">.col-text</td><td>left</td><td>sans</td><td>13 · text-secondary</td><td>Identity columns where text is the primary affordance — Client cell name, etc.</td></tr>
+        <tr><td class="mono">.col-text&nbsp;.muted</td><td>left</td><td>sans</td><td>13 · muted</td><td><strong>Reference columns</strong> — Plan, Carrier · Region, Pool, Provider · Method, Last-event label, Logs Details (see §4.6)</td></tr>
+        <tr><td class="mono">.col-num</td><td>center</td><td>mono · tabular</td><td>12 · muted</td><td>Counts · quantities</td></tr>
+        <tr><td class="mono">.col-money</td><td>center</td><td>mono · tabular</td><td>12 · muted</td><td>Currency amounts</td></tr>
+        <tr><td class="mono">.col-date</td><td>center</td><td>mono · tabular</td><td>12 · muted</td><td>Datetimes · dates</td></tr>
+        <tr><td class="mono">.col-pct</td><td>center</td><td>mono · tabular</td><td>12 · muted</td><td>Percentages</td></tr>
+        <tr><td class="mono">.col-duration</td><td>center</td><td>mono · tabular</td><td>12 · muted</td><td>Time intervals (renewal terms)</td></tr>
+        <tr><td class="mono">.col-status</td><td>left</td><td>sans</td><td>chip-driven</td><td>Status / state pills</td></tr>
+        <tr><td class="mono">.col-action</td><td>center</td><td>—</td><td>—</td><td>Icon buttons (edit / expand)</td></tr>
+        <tr><td class="mono">.col-chk</td><td>—</td><td>—</td><td>32px wide · 20px pad-l</td><td>Bulk-select checkbox</td></tr>
+        <tr><td class="mono"><strong style="color:var(--accent)">.col-endpoint</strong></td><td>left</td><td>mono · tabular</td><td>12 · muted</td><td><strong style="color:var(--accent)">v1.2</strong> Network endpoint (IP:port "192.168.1.1:8080") — Proxies</td></tr>
+        <tr><td class="mono"><strong style="color:var(--accent)">.col-volume</strong></td><td>center</td><td>mono · tabular</td><td>12 · muted</td><td><strong style="color:var(--accent)">v1.2</strong> Data volume ("12.5 GB") — Proxies</td></tr>
+        <tr><td class="mono"><strong style="color:var(--accent)">.col-period</strong></td><td>left</td><td>mono · tabular</td><td>12 · muted</td><td><strong style="color:var(--accent)">v1.2</strong> Date range ("21 Apr → 22 Apr") — Client Detail</td></tr>
+        <tr><td class="mono"><strong style="color:var(--accent)">.col-actor</strong></td><td>left</td><td>sans</td><td>13 · text-secondary</td><td><strong style="color:var(--accent)">v1.2</strong> Avatar + name composite — Logs, Settings Admins</td></tr>
+        <tr><td class="mono"><strong style="color:var(--accent)">.col-exc</strong></td><td>left</td><td>sans + 10 muted sub</td><td>chip + sub-detail</td><td><strong style="color:var(--accent)">v1.2</strong> Two-line exception (chip + detail) — Orders Exceptions tab</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Centered headers with help-tip:</strong> wrap the label in
+      <code>&lt;span class="th-label"&gt;Label<span class="specimen-help-badge">i</span>&lt;/span&gt;</code> so the
+      tip icon is positioned absolutely off the label's right edge. The visual centre of the header stays
+      anchored to the label text, not text-plus-icon.
+    </div>
+
+<pre class="code"><span class="c">/* Body cell typography — col-id keeps prominence (13), other numerics step down (12 muted) */</span>
+<span class="k">.dt tbody td.col-id</span> {
+  <span class="p">font-family</span>: <span class="t">var(--font-mono)</span>;
+  <span class="p">font-variant-numeric</span>: <span class="v">tabular-nums</span>;
+}
+<span class="k">.dt tbody td.col-num,
+.dt tbody td.col-money,
+.dt tbody td.col-date,
+.dt tbody td.col-pct,
+.dt tbody td.col-duration</span> {
+  <span class="p">font-family</span>: <span class="t">var(--font-mono)</span>;
+  <span class="p">font-variant-numeric</span>: <span class="v">tabular-nums</span>;
+  <span class="p">font-size</span>: <span class="v">12px</span>;
+  <span class="p">color</span>: <span class="t">var(--muted)</span>;
+}</pre>
+  </div>
+
+  <!-- 3.3 WIDGET ROWS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.3</span> Widget rows</h3>
+    <p class="ss-desc">
+      Shared template across <code>.widget-row</code>, <code>.expiring-segment</code>, and <code>.issue-row</code>.
+      Dot · label · count layout, 12×20 padding, divider via <code>--row-divider-inset</code>.
+    </p>
+    <div class="ex">
+      <div class="ex-visual flush">
+        <div class="demo-widget">
+          <div class="row"><span class="dot" style="background:var(--danger)"></span><span class="lbl">Faulty / offline</span><span class="cnt">4</span></div>
+          <div class="row"><span class="dot" style="background:var(--warning)"></span><span class="lbl">Maintenance</span><span class="cnt">2</span></div>
+          <div class="row"><span class="dot" style="background:var(--accent)"></span><span class="lbl">High latency</span><span class="cnt">3</span></div>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Layout</dt><dd>flex · gap 12 · padding 12×20</dd>
+          <dt>Dot</dt><dd>5×5 round · color set inline · NO halo</dd>
+          <dt>Label</dt><dd>13/500 text-secondary · flex:1</dd>
+          <dt>Count</dt><dd>13/650 muted · tabular-nums</dd>
+          <dt>Divider</dt><dd>--row-divider-inset (20px) · gradient</dd>
+          <dt>Hover</dt><dd>bg-hover · cursor pointer · transition .1s</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.4 HELP TIP -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.4</span> Help-tip · tooltip floater</h3>
+    <p class="ss-desc">
+      The <code>i</code> badge sits inline next to a label; the floater is a fixed-position popover that
+      shares the form-select's surface (<code>--surface-2</code> / <code>--text</code>) so all three —
+      tooltip, dropdown, input — read with the same swatch.
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;gap:32px;align-items:center;flex-wrap:wrap">
+        <div>
+          <span class="specimen-thead">CAPACITY STATE</span>&nbsp;<span class="specimen-help-badge">i</span>
+        </div>
+        <div>
+          <span class="specimen-tooltip" style="font-size:12.5px">Derived selling condition based on Available quota, allocated orders, grace blocks, and release timing.</span>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Badge</dt><dd>13×13 round · 9.5/600 · surface-2 / muted</dd>
+          <dt>Badge margin-l</dt><dd>4px (next to label)</dd>
+          <dt>Badge hover</dt><dd>accent-dim / accent</dd>
+          <dt>Floater bg</dt><dd>--surface-2</dd>
+          <dt>Floater text</dt><dd>--text · 14/500 · 1.55 line-height</dd>
+          <dt>Floater pad</dt><dd>16px (symmetric)</dd>
+          <dt>Floater border</dt><dd>1px solid border-strong</dd>
+          <dt>Max-width</dt><dd>320px</dd>
+          <dt>Shadow</dt><dd>0 8 24 rgba(0,0,0,.55)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.5 CHIPS / CAP-LABELS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.5</span> Chips · capacity labels</h3>
+    <p class="ss-desc">
+      Both share the same pill geometry (10.5/600, .02em tracking, 1×8 padding, 999px radius — the 1px v-pad
+      is hairline-allowance for pill compactness). They differ only in semantic vocabulary:
+      <code>.chip</code> covers transactional states (paid · pending · expired),
+      <code>.cap-label</code> covers Selling Capacity states (Available · Sold out · Blocked by grace).
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="demo-chip paid">Paid</span>
+          <span class="demo-chip pending">Pending</span>
+          <span class="demo-chip active">Active</span>
+          <span class="demo-chip expired">Expired</span>
+          <span class="demo-chip faulty">Faulty</span>
+          <span class="demo-chip assigned">Assigned</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="demo-cap available">Available</span>
+          <span class="demo-cap sold-out">Sold out</span>
+          <span class="demo-cap blocked-grace">Blocked by grace</span>
+          <span class="demo-cap waiting-release">Waiting release</span>
+          <span class="demo-cap low">Low availability</span>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Geometry</dt><dd>1×8 pad · 999px radius · 10.5/600 · .02em</dd>
+          <dt>.chip.paid</dt><dd>success / success-dim</dd>
+          <dt>.chip.pending</dt><dd>warning / warning-dim</dd>
+          <dt>.chip.faulty</dt><dd>danger / danger-dim</dd>
+          <dt>.chip.assigned</dt><dd>accent / accent-dim</dd>
+          <dt>.chip.expired</dt><dd>muted / surface-2</dd>
+          <dt>.cap-label.available</dt><dd>success @ 10% bg</dd>
+          <dt>.cap-label.sold-out</dt><dd>danger @ 10% bg</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.6 FORM CONTROLS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.6</span> Form controls</h3>
+    <p class="ss-desc">
+      <code>.form-input</code>, <code>.form-select</code>, <code>.form-textarea</code> share one geometry:
+      32px height, 11px horizontal padding, surface-2 background, accent border on focus.
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span class="specimen-form-select">All carriers ▾</span>
+        <span class="specimen-form-select">All regions ▾</span>
+        <span style="display:inline-block;height:32px;padding:0 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--muted);font-size:12.5px;line-height:30px">Search…</span>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Height</dt><dd>32px</dd>
+          <dt>Padding</dt><dd>0 11px</dd>
+          <dt>Background</dt><dd>--surface-2</dd>
+          <dt>Border</dt><dd>1px solid border</dd>
+          <dt>Radius</dt><dd>--radius-md (10)</dd>
+          <dt>Font</dt><dd>12.5px · text</dd>
+          <dt>Focus</dt><dd>border-color: --accent</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.7 SIDEBAR NAV -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.7</span> Sidebar navigation</h3>
+    <p class="ss-desc">
+      Three section groups — Operations · Inventory · System. <strong>Lucide outline icons</strong> at 16×16,
+      stroke 1.5; opacity .55 by default, 1.0 on the active item. Active item adds a 3px accent bar at the left edge.
+    </p>
+    <div class="ex">
+      <div class="ex-visual">
+        <div class="demo-sidebar">
+          <div class="sec">Operations</div>
+          <div class="item active">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            Dashboard
+          </div>
+          <div class="item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Orders
+          </div>
+          <div class="item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            Payments
+          </div>
+          <div class="sec">Inventory</div>
+          <div class="item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/></svg>
+            Plans
+          </div>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Width</dt><dd>--sidebar-w · 220px</dd>
+          <dt>Item pad · gap</dt><dd>8px 12px · gap 12px (inside <code>.nav</code> with 12px container pad)</dd>
+          <dt>Item type</dt><dd>13/500 muted (active 600 text)</dd>
+          <dt>Item hover</dt><dd>bg-hover bg · text-secondary fg</dd>
+          <dt>Active bg</dt><dd>--surface-3</dd>
+          <dt>Active marker</dt><dd>::before · 3px wide accent bar at left</dd>
+          <dt>Icon</dt><dd>Lucide outline · 16×16 · stroke 1.5 · opacity .55→1</dd>
+          <dt>Section label</dt><dd>10/600 .08em uppercase accent</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.8 FORM CARD -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.8</span> Form card <span style="color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-left:8px">added in v1.2</span></h3>
+    <p class="ss-desc">
+      Canonical fieldset container for grouped form inputs inside Settings tabs (Providers · Notifications ·
+      Grace · API · etc.). Replaces a previously-inline pattern that was duplicated 9+ times in the source.
+      Pairs naturally with <code>.form-field</code> and <code>.form-grid</code> for nested layouts.
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="padding:0">
+        <div style="background:var(--surface-2); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; display:flex; flex-direction:column; gap:10px">
+          <div style="font-size:12px; font-weight:600; color:var(--text)">Stripe</div>
+          <div style="font-size:11.5px; color:var(--muted); line-height:1.5">Card-on-file processor. Webhook secret rotates monthly. Confirmation latency ≈ 2.3s p50.</div>
+          <div style="display:flex; gap:8px; align-items:center">
+            <span style="display:inline-block; padding:1px 8px; border-radius:999px; background:var(--success-dim); color:var(--success); font-size:10.5px; font-weight:600; letter-spacing:.02em">Connected</span>
+            <span style="font-size:11px; color:var(--text-disabled)">last sync 2m ago</span>
+          </div>
+        </div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Background</dt><dd>--surface-2</dd>
+          <dt>Border</dt><dd>1px solid border-subtle</dd>
+          <dt>Radius</dt><dd>--radius-md (10)</dd>
+          <dt>Padding</dt><dd>16px (symmetric)</dd>
+          <dt>Variant</dt><dd>.form-card.dashed → dashed border on var(--border) (placeholder/empty states)</dd>
+        </dl>
+      </div>
+    </div>
+<pre class="code"><span class="c">/* Replaces inline duplicates across &lt;section data-page="settings"&gt; */</span>
+<span class="k">.form-card</span> {
+  <span class="p">background</span>: <span class="t">var(--surface-2)</span>;
+  <span class="p">border</span>: <span class="v">1px solid <span class="t">var(--border-subtle)</span></span>;
+  <span class="p">border-radius</span>: <span class="t">var(--radius-md)</span>;
+  <span class="p">padding</span>: <span class="v">16px</span>;
+}
+<span class="k">.form-card.dashed</span> { <span class="p">border-style</span>: <span class="v">dashed</span>; <span class="p">border-color</span>: <span class="t">var(--border)</span>; }</pre>
+  </div>
+
+  <!-- 3.9 BULK-BAR -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.9</span> Bulk-action surface <code style="background:var(--surface-2);padding:1px 6px;border-radius:3px;font-family:var(--font-mono);font-size:12px">.bulk-bar</code> <span style="color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-left:8px">added in v2.6</span></h3>
+    <p class="ss-desc">
+      A horizontal action strip that appears between the filter bar and the data table whenever one or more
+      checkbox rows are selected. Used on Orders / Renewals / Payments / Plans / Proxies. Two design-decisions
+      define the pattern: <strong>matrix-driven button set</strong> (per-tab × per-row-state action visibility)
+      and <strong>Set-based selection model</strong> (state lives in JS, not <code>.chk.checked</code>).
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Markup contract.</strong></p>
+<pre class="code"><span class="t">&lt;div class="bulk-bar" id="ordersBulkBar"&gt;</span>
+  <span class="t">&lt;div class="bulk-summary"&gt;</span>
+    <span class="t">&lt;span class="chk checked" onclick="clearOrdersSelection()"&gt;&lt;/span&gt;</span>
+    <span class="t">&lt;span id="ordersBulkCount"&gt;0 selected&lt;/span&gt;</span>
+  <span class="t">&lt;/div&gt;</span>
+  <span class="t">&lt;div class="bulk-actions" id="ordersBulkActions"&gt;&lt;/div&gt;</span>
+<span class="t">&lt;/div&gt;</span></pre>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Action registry.</strong> Each page declares a flat
+      <code>XXX_ACTION_REGISTRY</code> mapping label → metadata
+      (<code>{ mode: 'single'|'multi', handler, tone?: 'danger' }</code>). One source of truth for what each
+      bulk button does. The matrix <code>XXX_BULK_ACTIONS</code> then maps <strong>(tab, row-state) → action[]</strong> —
+      e.g. <em>Orders / Active tab</em> exposes <em>Suspend · Cancel · Edit</em>, while <em>Orders / New tab</em>
+      exposes <em>Send reminder · Confirm payment · Cancel</em>.
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Row-state-aware filtering.</strong> On heterogeneous-tab
+      pages ("All" / "Attention"), <code>computeXxxLabels(ids)</code> intersects the per-status label sets of
+      every selected row — only the actions valid for ALL selected rows survive. Eliminates the "operator picks
+      action that's only valid for some rows" failure mode.
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Single-vs-multi gating.</strong> Buttons tagged
+      <code>data-bulk-mode="single"</code> hide via <code>display:none</code> when <em>n ≥ 2</em> rows are
+      selected. The bar then shows just the count + the clear button. Used for actions that semantically
+      operate on one row (e.g. <em>Assign proxy</em>, <em>Inspect</em>).
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Selection clearing triggers.</strong> Always invoke
+      <code>clearXxxSelection()</code> — never just clear DOM classes — on: tab change · filter change ·
+      successful bulk-action completion. Otherwise the Set drifts from the DOM.
+    </p>
+  </div>
+
+  <!-- 3.10 FORM VALIDATION -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">3.10</span> Form validation <span style="color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-left:8px">added in v2.7</span></h3>
+    <p class="ss-desc">
+      Three coordinated layers — HTML5 native attributes, shared CSS state, and a generic JS validator.
+    </p>
+
+    <table class="pat-table">
+      <thead><tr><th>Layer</th><th>What it does</th><th>Used on</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>HTML5 attrs</strong></td>
+          <td>Every numeric field carries <code>type="number" min="N" max="M" step="S"</code> matching its semantic bounds (hours: 0–720, %: 0–100, USD cap: 0–99999, etc.)</td>
+          <td>27 numeric inputs across Plan Create · Plan Edit · Settings (Grace · Flags · API · Providers) · New Order modal</td>
+        </tr>
+        <tr>
+          <td><strong>Required marker</strong></td>
+          <td><code>&lt;span class="req"&gt;*&lt;/span&gt;</code> appended to <code>.form-label</code> text on fields that must have a value. Conservative scope — only fields where blank is semantically invalid.</td>
+          <td>Identity fields · Plan name · Carrier · Region · Pool · Settings defaults · Quantity</td>
+        </tr>
+        <tr>
+          <td><strong>Invalid state</strong></td>
+          <td><code>.form-input.invalid</code> renders <code>border-color: var(--danger)</code>. Toggled by the JS validator; cleared automatically when the user types a valid value.</td>
+          <td>Reused from create-client validator; now generic across all forms.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Generic validator.</strong>
+      <code>validateNumericInputs(rootEl)</code> walks every <code>input[type="number"]</code> in scope, reads
+      its <code>min</code>/<code>max</code> attributes, and returns <code>{el, label, value, reason}[]</code>.
+      Labels are extracted via cloned <code>labelEl</code> with all <code>&lt;span&gt;</code> children removed —
+      a critical detail, because a naive <code>textContent.replace(/i/g,'')</code> would strip every letter "i"
+      from the actual label text along with the help-tip icon. Empty values fail only if the field's label
+      carries <code>.req</code>.
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Domain rules layer.</strong> Section-specific Save
+      handlers wrap the generic validator and add per-section checks. <em>Grace Rules</em>: monotonicity
+      (Second reminder &lt; Pre-renewal, Third &lt; Second). <em>System Flags</em>: bounds-only.
+      <em>Provisioning rule</em>: duplicate-guard on (carrier, region).
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Error surfacing.</strong>
+      <code>_toastValidationErrors(errors)</code> emits a warn-tone toast: title <em>"1 field needs attention"</em>
+      / <em>"3 fields need attention"</em>, body lists up to 3 specific errors verbatim
+      (<em>"Default grace period (hours): Required"</em>, <em>"Discount cap: Max 100"</em>), then "+ N more"
+      collapse. Plural noun + verb agree with the count.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     §4 PATTERNS
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s" id="s4">
+  <div class="s-h">
+    <span class="s-num">§4</span>
+    <h2 class="s-title">Patterns</h2>
+  </div>
+  <p class="s-intro">
+    Cross-cutting conventions about <em>how</em> components are used, not just what they look like. These
+    are the rules that make the prototype feel coherent — they're not enforceable by CSS alone, they live
+    in markup and in the data layer.
+  </p>
+
+  <!-- 4.1 ENTITY LINK -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.1</span> Entity-link convention <em style="font-weight:400;color:var(--muted);font-size:12px">· Client Identity Rule</em></h3>
+    <p class="ss-desc">
+      Every clickable ID that opens a detail page renders <strong>blue</strong> via <code>.td-link</code>,
+      <code>.client-link</code>, or <code>.plan-link</code>. Names render as plain secondary text (<code>.muted</code>
+      or <code>.t-primary</code>) <em>even when the row navigates somewhere</em> — visual consistency across
+      identity columns wins.
+    </p>
+    <p class="ss-desc" style="margin-top:8px">
+      Entity links inside a <code>.col-id</code> cell already inherit mono via the <code>.dt</code> cascade.
+      Outside the table — in a kv-row, timeline, breadcrumb, modal — wrap the entity link in
+      <code>.kv-val.mono</code> (kv-row) or apply the <code>.mono</code> utility directly
+      (e.g. <code>&lt;a class="client-link mono"&gt;${'CLI-2184'}&lt;/a&gt;</code>) so the ID renders mono +
+      tabular-nums everywhere. Plan / Carrier / Pool names that happen to live inside a <code>.td-link</code>
+      stay sans-serif — they're text labels, not identifiers.
+    </p>
+    <div class="callout">
+      <strong>The Clients list is the single approved exception:</strong> the human name remains the primary
+      browsing affordance because that surface is people-browsing, not entity-browsing. Client ID still sits
+      in its own column for copy-on-click.
+    </div>
+  </div>
+
+  <!-- 4.2 HEADER NAMING -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.2</span> Header naming convention</h3>
+    <p class="ss-desc">
+      Append <code>"ID"</code> to the column header <strong>only when the column shows the literal entity ID</strong>
+      (an entity link). Chip-status columns keep the bare noun.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th>Column shows</th><th>Header reads</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>Entity ID link (<code>.td-link</code>)</td><td class="mono"><span class="yes">"Order ID"</span></td><td>Recent Orders, Payments list (Payment ID), Proxy detail (Order ID)</td></tr>
+        <tr><td>Entity ID link</td><td class="mono"><span class="yes">"Client ID"</span></td><td>Recent Orders, Orders list, Payments list</td></tr>
+        <tr><td>Entity ID link</td><td class="mono"><span class="yes">"Proxy ID"</span></td><td>Proxies list, Client detail Orders panel</td></tr>
+        <tr><td>Entity ID link</td><td class="mono"><span class="yes">"Payment ID"</span></td><td>Payments list, Client detail Payments panel</td></tr>
+        <tr><td>Status chip (<code>.chip</code>)</td><td class="mono"><span class="no">"Payment"</span></td><td>Recent Orders (chip Paid/Pending), Orders list, Client detail Orders panel</td></tr>
+        <tr><td>Status chip</td><td class="mono"><span class="no">"Status"</span></td><td>Every list page</td></tr>
+        <tr><td>State pill (<code>.cap-label</code>)</td><td class="mono"><span class="no">"Capacity State"</span></td><td>Selling Capacity by Plan</td></tr>
+        <tr><td>Toggle</td><td class="mono"><span class="no">"Auto-renew"</span></td><td>Renewals, Client detail Orders panel</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4.3 ID DISPLAY -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.3</span> ID display — no <code>#</code> prefix</h3>
+    <p class="ss-desc">
+      Rendered IDs never carry a leading <code>#</code> sigil. The mono family + tabular-nums + accent color
+      already signal "this is a code-like identity"; the <code>#</code> is redundant noise. This applies to
+      every visible surface — table cells, kv-rows, breadcrumbs, backlink labels, toast bodies, tour text,
+      activity feed entries.
+    </p>
+    <div class="ex">
+      <div class="ex-visual" style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+        <div><span class="specimen-link">ORD-10847</span> &nbsp; <span style="color:var(--text-disabled);font-size:11px">canonical</span></div>
+        <div><span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-disabled);text-decoration:line-through">#ORD-10847</span> &nbsp; <span style="color:var(--danger);font-size:11px">deprecated</span></div>
+      </div>
+      <div class="ex-spec">
+        <dl>
+          <dt>Rendered</dt><dd><code>ORD-10847</code></dd>
+          <dt>Markup</dt><dd><code>${o.id}</code> (no <code>#</code>)</dd>
+          <dt>Backlink label</dt><dd><code>"Order ${id}"</code></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4.4 IDENTIFIER & NUMERIC TYPOGRAPHY -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.4</span> Identifier &amp; numeric typography</h3>
+    <p class="ss-desc">
+      <strong>Mono + tabular-nums applies to every identifier-shaped value</strong> — not just numeric columns.
+      The rule is content-driven, not column-driven: any token that operators copy / parse / compare with their
+      eyes (entity IDs, IPs, URLs, emails, Telegram handles, hardware IDs, masked card tails, dates) renders
+      mono. Surrounding sentence prose stays sans-serif. Without this, identical data forks in font between
+      table cells (mono) and detail-page <code>.kv-val</code> / header / log description (sans-serif) — the
+      audit pass that surfaced this rule found five distinct deviation clusters across pages.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th>Token shape</th><th>Examples</th><th>Where it appears</th></tr></thead>
+      <tbody>
+        <tr><td>Entity ID prefix</td><td class="mono">ORD-10847 · CLI-2184 · PRX-3042 · PAY-8612 · PLAN-V30E</td><td><code>.col-id</code> · <code>.detail-id</code> · <code>.kv-val.mono</code> · <code>.tl-meta</code> · inline in log details</td></tr>
+        <tr><td>Numeric (count / money / pct / duration)</td><td class="mono">$200 · 99.7% · 30d · 12.4 GB</td><td><code>.col-num</code> · <code>.col-money</code> · <code>.col-pct</code> · <code>.col-duration</code></td></tr>
+        <tr><td>Date (with optional time)</td><td class="mono">24 Apr · 10:14</td><td><code>.col-date</code> · <code>.kv-val.mono</code> · <code>.tl-meta</code> · inline date span</td></tr>
+        <tr><td>Network address</td><td class="mono">45.128.74.102:8080</td><td>Proxies list Credentials · Proxy detail Host · Port</td></tr>
+        <tr><td>URL</td><td class="mono">https://ops.proxyops.io/hooks/orders</td><td>Webhook endpoint cells</td></tr>
+        <tr><td>Email · Telegram handle</td><td class="mono">marcus.chen@outlook.com · @marcus_c</td><td><code>.copy-contact</code> · Settings Admin Email · log details</td></tr>
+        <tr><td>Hardware / firmware ID</td><td class="mono">MDM-17 · 22.430.05.00.00</td><td>Proxies list Hardware ID · kv-rows</td></tr>
+        <tr><td>Masked card tail</td><td class="mono">•• 4242</td><td>Payment detail · log details</td></tr>
+      </tbody>
+    </table>
+    <p class="ss-desc" style="margin-top:14px">
+      Helper classes that deliver this typography:
+      <code>.td-mono</code> (mono · 12px · muted · tabular-nums — composable on any <code>td</code>),
+      <code>.mono</code> (utility — mono + tabular-nums + .02em letter-spacing),
+      <code>.copy-contact</code> / <code>.copy-value</code> (mono + tabular-nums + click-to-copy hover),
+      <code>.detail-id</code> (mono · 18px · 650 — the identity heading on every detail page),
+      <code>.tl-meta</code> (mono · 11px · muted — timeline event meta line).
+    </p>
+  </div>
+
+  <!-- 4.5 CENTERED HEADERS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.5</span> Centered headers with help-tip</h3>
+    <p class="ss-desc">
+      For centered columns that carry a tip icon, wrap the label in <code>.th-label</code> so the help-tip
+      is positioned absolutely off the label's right edge. The visual centre of the column header stays
+      anchored to the <em>label text</em>, not text-plus-icon.
+    </p>
+<pre class="code"><span class="c">/* Markup */</span>
+&lt;th class=<span class="v">"col-num"</span>&gt;
+  &lt;span class=<span class="v">"th-label"</span>&gt;Quota
+    &lt;span class=<span class="v">"help-tip"</span> data-tip=<span class="v">"…"</span>&gt;i&lt;/span&gt;
+  &lt;/span&gt;
+&lt;/th&gt;
+
+<span class="c">/* CSS */</span>
+<span class="k">.dt thead th .th-label</span> { <span class="p">position</span>: <span class="v">relative</span>; <span class="p">display</span>: <span class="v">inline-block</span>; }
+<span class="k">.dt thead th .th-label &gt; .help-tip</span> {
+  <span class="p">position</span>: <span class="v">absolute</span>; <span class="p">left</span>: <span class="v">100%</span>; <span class="p">top</span>: <span class="v">50%</span>;
+  <span class="p">transform</span>: <span class="v">translateY(-50%)</span>;
+  <span class="p">margin-left</span>: <span class="v">3px</span>;
+}</pre>
+  </div>
+
+  <!-- 4.6 BODY-CELL COLOR HIERARCHY -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.6</span> Body-cell color hierarchy</h3>
+    <p class="ss-desc">
+      Inside one row, body text splits into <strong>two brightness tiers</strong>. The Dashboard Recent Orders
+      widget is the canonical reference — propagate its rendering, not the other way around. The split keeps
+      the row scannable: synthetic / contextual fields recede, primary identity fields hold attention.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th>Tier</th><th>Color token</th><th>Cell types</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Primary</strong></td>
+          <td class="mono">var(--accent)</td>
+          <td><code>.col-id</code> entity links</td>
+          <td><span class="specimen-link">ORD-10847</span> &nbsp; <span class="specimen-link">CLI-2184</span></td>
+        </tr>
+        <tr>
+          <td><strong>Primary text</strong></td>
+          <td class="mono">var(--text-secondary)</td>
+          <td><code>.col-text</code> identity columns (Client cell, name fields where the name is the row's primary affordance)</td>
+          <td>Marcus Chen</td>
+        </tr>
+        <tr>
+          <td><strong>Muted reference</strong></td>
+          <td class="mono">var(--muted)</td>
+          <td><code>.col-text muted</code> (or inner <code>&lt;span class="muted"&gt;</code>) — every non-identity reference column</td>
+          <td><span style="color:var(--muted);font-size:13px">Verizon · 30d · East</span> &nbsp; <span style="color:var(--muted);font-size:13px">Verizon-East-A</span></td>
+        </tr>
+        <tr>
+          <td><strong>Status / state</strong></td>
+          <td class="mono">chip color</td>
+          <td><code>.col-status</code></td>
+          <td><span class="chip active" style="display:inline-block;padding:2px 10px;border-radius:8px;background:var(--success-dim);color:var(--success);font-size:10.5px;font-weight:600;letter-spacing:.03em">Active</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="ss-desc" style="margin-top:14px">
+      <strong>Muted reference column inventory</strong> — every cell in this list renders <code>var(--muted)</code>:
+    </p>
+    <ul class="ss-desc" style="margin:6px 0 0 18px;padding:0;list-style:disc;line-height:1.7">
+      <li><strong>Plan</strong> — Orders list, Renewals list, Dashboard Recent Orders, Order detail Plan kv-row, Client detail Orders panel</li>
+      <li><strong>Carrier · Region</strong> — Orders list, Plans list, Proxies list</li>
+      <li><strong>Pool</strong> — Plans list, Proxies list</li>
+      <li><strong>Provider · Method</strong> — Payments list</li>
+      <li><strong>Last event label</strong> — Clients list (the date stays mono via <code>.td-mono</code>; the label after the dot is muted)</li>
+      <li><strong>Details column</strong> — Admin Logs (descriptive prose; identifier-shaped tokens inside lift to mono via <code>formatLogDetail()</code>)</li>
+      <li><strong>Events</strong> — Settings → API / Webhooks (event glob patterns)</li>
+    </ul>
+    <div class="callout" style="margin-top:14px">
+      <strong>Pre-canon deviation pattern.</strong> Earlier passes left these columns at default
+      <code>var(--text-secondary)</code> on Orders / Renewals / Clients lists — making Plan and Carrier · Region
+      compete with the blue entity links on either side. Dashboard widget always rendered them muted; the
+      ad-hoc per-page choices ("brighten this", "mute that") had no design-code rule to enforce consistency.
+      The fix is structural: Dashboard is canon, every reference column propagates its muted treatment.
+    </div>
+  </div>
+
+  <!-- 4.7 POLICY-OVERRIDE HATCH -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">4.7</span> Policy-override hatch — centralized default + per-entity opt-out <span style="color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-left:8px">added in v2.7</span></h3>
+    <p class="ss-desc">
+      When an operational policy applies to multiple entities <em>by default</em>, but a small minority need a
+      custom value, separate <strong>where the policy lives</strong> (centralized) from <strong>where the
+      exception lives</strong> (per-entity, opt-in). The default is inherited; the override is one
+      <code>.toggle-v2</code> + one conditional field on the entity-edit page.
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Canonical instance — Settings → Provisioning ⇄ Plan Edit.</strong>
+      <em>Settings → Provisioning</em> hosts a <code>.dt</code> table mapping (Carrier · Region) → default Pool
+      (+ optional fallback chain + auto-assign toggle). <em>Plan Edit → Infrastructure</em> exposes an
+      "Override default pool" toggle that:
+    </p>
+    <ul class="ss-desc" style="margin:6px 0 0 18px;padding:0;list-style:disc;line-height:1.7">
+      <li>When <strong>OFF</strong> (default) — shows a disabled readout populated from <code>getProvisioningDefault(carrier, region).defaultPool</code>. Pool select is hidden.</li>
+      <li>When <strong>ON</strong> — hides the readout, reveals the editable pool <code>&lt;select&gt;</code>. Stores <code>plan.poolOverride = true</code> + <code>plan.pool = '&lt;chosen&gt;'</code>.</li>
+    </ul>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>Why this shape.</strong> The centralized table is the
+      single source of truth — most plans inherit, so changing a default propagates without per-plan edits. The
+      hatch is opt-in: the operator must explicitly take responsibility for diverging from policy. The Plan Edit
+      surface stays clean for the 95% inherit-default case.
+    </p>
+
+    <p class="ss-desc" style="margin-top:14px"><strong>When to reach for this pattern.</strong> Any operational
+      knob where <em>(a)</em> a sensible group-default exists, <em>(b)</em> an entity can opt out, and
+      <em>(c)</em> the override is exceptional rather than typical. Other future candidates: refund-policy
+      override per VIP client, rate-limit override per API key, grace-period override per plan tier.
+    </p>
+
+    <div class="callout" style="margin-top:14px">
+      <strong>Anti-pattern.</strong> Don't duplicate the policy editor onto every entity-edit page. If every
+      plan editor shows a full pool dropdown by default, operators end up making per-plan decisions that should
+      be group-policy decisions, and changing the group default requires touching every plan.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     §5 DASHBOARD-LOCAL EXCEPTIONS
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s exception" id="s5">
+  <div class="s-h">
+    <span class="s-num">§5</span>
+    <h2 class="s-title">Dashboard-local exceptions</h2>
+    <span class="s-tag">Do not propagate</span>
+  </div>
+  <p class="s-intro">
+    Patterns that exist <strong>only</strong> on the Dashboard. They will not be reused on Orders, Payments,
+    Clients, Renewals, Plans, Proxies, Logs, Settings, or any detail page. Listed here so the boundary is
+    explicit and reviewers can flag drift early.
+  </p>
+
+  <!-- 5.1 KPI BANNER -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">5.1</span> KPI banner row · <code style="background:var(--danger-dim);color:var(--danger);padding:1px 6px;border-radius:3px;font-family:var(--font-mono);font-size:12px">.kpi-card</code> × 6</h3>
+    <p class="ss-desc">
+      Six summary cards at the top of the Dashboard. Each carries an uppercase label, a centered numeric
+      value (KPI value type · 15/650 -.01em), and a colored accent bar at the bottom edge that reads as a
+      <em>foundation line</em> rather than a floating mid-card element.
+    </p>
+    <div class="ex">
+      <div class="ex-visual flush" style="grid-column:1 / -1">
+        <div class="demo-kpi-row">
+          <div class="demo-kpi"><div class="lbl">Paid Today</div><div class="val tone-success">$57.3K</div><div class="bar green"></div></div>
+          <div class="demo-kpi"><div class="lbl">Active Clients</div><div class="val tone-violet">847</div><div class="bar violet"></div></div>
+          <div class="demo-kpi"><div class="lbl">Expiring 7d</div><div class="val tone-warning">23</div><div class="bar orange"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex" style="margin-top:14px">
+      <div class="ex-spec" style="grid-column:1 / -1">
+        <dl>
+          <dt>Container</dt><dd>surface · 1px border · radius-lg · padding 16 16 <strong style="color:var(--danger)">6</strong> (asymmetric — sinks bar; the only intentional non-grid value, see §1.3) · min-height 90px</dd>
+          <dt>Layout</dt><dd>flex-column · gap 12 · cursor pointer</dd>
+          <dt>Label</dt><dd>11/650 .14em uppercase text-disabled · centered (matches panel-title typography)</dd>
+          <dt>Value</dt><dd>15/650 -.01em tabular-nums centered · margin-top: auto (anchors value+bar to bottom)</dd>
+          <dt>Accent bar</dt><dd>.kpi-accent-bar.full · height 2 · margin-top 0 · margin-bottom 2 · radius 2 · gradient + glow per tone</dd>
+          <dt>Tones</dt><dd>.green / .blue / .orange / .red / .violet · linear-gradient (90deg, 0% → 18% peak → 82% peak → 100%) at 36% alpha · box-shadow @ 14% alpha</dd>
+          <dt>Hover</dt><dd>border-color → border-strong · background → bg-hover · transition .15s</dd>
+          <dt>Active</dt><dd>transform: translateY(1px)</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Why dashboard-local?</strong> KPI cards are a <em>summary surface</em> unique to the Dashboard's
+      role as a daily status overview. Reusing them on detail or list pages would be visually redundant —
+      detail pages already carry the same numbers as <code>.kv-row</code>s in their right aside, and list
+      pages don't summarise. The <code>.mini-stat-value</code> pattern (left-aligned, smaller, no accent bar)
+      is the canonical alternative for in-detail metrics.
+    </div>
+  </div>
+
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">5.2</span> Reserved</h3>
+    <p class="ss-desc">
+      Future Dashboard-only patterns discovered during migration will be added here, with the same
+      "do not propagate" framing.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     §6 MIGRATION PLAN
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s" id="s6">
+  <div class="s-h">
+    <span class="s-num">§6</span>
+    <h2 class="s-title">Migration log</h2>
+  </div>
+  <p class="s-intro">
+    Completion record for the multi-phase rollout that brought the prototype to current canon. Each phase
+    was a self-contained edit pass with its own review gate; this section captures what shipped and where the
+    canon now lives. Forward-looking work (Phase 2.8+ / production handoff) is tracked in
+    <code>HANDOFF.md</code> alongside this doc.
+  </p>
+
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">6.1</span> Phase 2 — table system rollout (shipped)</h3>
+    <p class="ss-desc">
+      Per-page migration onto the canonical <code>.dt</code> table system: <code>&lt;colgroup&gt;</code> with
+      <code>--anchor-l</code> / <code>--anchor-r</code> / <code>--w</code> / <code>--col-total</code>, semantic
+      column-type classes, edge cap via <code>applyDtAnchors()</code>. All 9 list pages now on the same
+      contract.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th style="width:40px">#</th><th>Page</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">2.1</td><td>Payments</td><td>0 divergence · canonical from first paint</td></tr>
+        <tr><td class="mono">2.2</td><td>Plans</td><td>11 cols canonical · capacity-state chip always emitted</td></tr>
+        <tr><td class="mono">2.3</td><td>Logs</td><td>8-tab view · <code>.col-actor</code> introduced</td></tr>
+        <tr><td class="mono">2.4</td><td>Renewals</td><td>6 buckets · per-bucket Status content stays page-local</td></tr>
+        <tr><td class="mono">2.5</td><td>Clients</td><td>Duplicate "Client ID" header fixed · Last event simplified · composite Client cell preserved</td></tr>
+        <tr><td class="mono">2.6</td><td>Orders</td><td>Exception sub-tabs transform Status → <code>.col-exc</code> column · most complex page</td></tr>
+        <tr><td class="mono">2.7</td><td>Proxies</td><td>12 cols · <code>.col-endpoint</code> · <code>.col-volume</code> · 8-tab view + sub-filter pills</td></tr>
+        <tr><td class="mono">2.8</td><td>Detail inner tables</td><td>5 tables across order-detail / client-detail / settings · <code>.col-period</code> · <code>.col-actor</code></td></tr>
+        <tr><td class="mono">2.9</td><td>Settings</td><td><code>.form-card</code> rolled out · 9+ inline duplicates retired</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">6.2</span> Phase 2.6 — bulk-bar canon (shipped)</h3>
+    <p class="ss-desc">
+      Replaced ad-hoc bulk-action surfaces with one shared shape. Every list page that supports row
+      selection now uses the same <code>.bulk-bar</code> markup (see §3.9), driven by a per-page action
+      registry + per-tab/per-state matrix. <strong>Row-state-aware filtering</strong> on heterogeneous tabs
+      ("All", "Attention") ensures the operator never sees an action that's invalid for some selected rows.
+    </p>
+  </div>
+
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">6.3</span> Phase 2.6.5 — selection-model canon (shipped)</h3>
+    <p class="ss-desc">
+      Migrated the last DOM-backed selection (Orders) onto the canonical <code>Set</code> pattern used by
+      Plans / Renewals / Payments / Proxies. Two upgrades over DOM-class state: <em>(1)</em> selection
+      survives table re-renders (the renderer reads back from the Set when emitting <code>.chk
+      ${SET.has(id) ? 'checked' : ''}</code>); <em>(2)</em> bulk-action handlers no longer depend on
+      rendered DOM state, important when async flows re-render the table mid-action.
+    </p>
+  </div>
+
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">6.4</span> Phase 2.7 — Settings flow + policy-override hatch (shipped)</h3>
+    <p class="ss-desc">
+      Settings page review fixed 14 dead toggles (wired to <code>db.settings.notifications</code> +
+      <code>db.settings.grace</code>), computed live admin count, wired admin Reactivate flow. New
+      <strong>Settings → Provisioning</strong> section introduced as the canonical location for per-(carrier
+      · region) default-pool policy (see §4.7). Plan Edit gained the matching "Override default pool"
+      hatch — toggle reveals an editable pool select while the readout shows the inherited default.
+    </p>
+    <p class="ss-desc" style="margin-top:14px">
+      Form validation hardening (see §3.10): 27 numeric inputs gained <code>type="number"</code> +
+      <code>min</code>/<code>max</code>/<code>step</code> attrs; Grace Rules + System Flags Save now run
+      <code>validateNumericInputs()</code> with domain-specific rules (monotonicity in Grace, duplicate-guard
+      in Provisioning); the <code>.invalid</code> error state is shared with the create-client validator.
+    </p>
+  </div>
+
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">6.5</span> Standing invariants</h3>
+    <ul style="color:var(--text-secondary);font-size:13px;line-height:1.7;padding-left:22px;margin:0">
+      <li><strong>Bulk-bar geometry.</strong> <code>.col-chk</code> = 32px width + 20px pad-left composes with <code>--table-edge-cap</code>. All bulk-bar pages share this column.</li>
+      <li><strong>Detail-page <code>.kv-row</code> rhythm</strong> uses <code>--row-divider-inset: 20px</code>, intentionally different from the table's 32px edge cap. Do not change.</li>
+      <li><strong>Renewals per-bucket Status.</strong> Status column content is context-dependent on the active bucket (24h/3d/7d/grace/expired/renewed). Renderer stays as-is.</li>
+      <li><strong>Plans Capacity State precompute.</strong> Renderer always emits a derived state (no null fallback); the chip column is unconditional.</li>
+      <li><strong>Bidirectional order ↔ proxy links.</strong> Every active assignment carries
+        <code>order.proxyId</code> + <code>proxy.currentOrderId</code> + an
+        <code>ASN-&lt;ord-suffix&gt;&lt;letter&gt;</code> assignment row. <code>validatePrototypeData()</code>
+        flags any drift.</li>
+      <li><strong>Settings persisted state.</strong> All toggles read from / write to <code>db.settings</code>; DOM is a mirror, not the source of truth. <code>syncXxxToggles()</code> runs on every tab open.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="doc-meta" style="justify-content:center;color:var(--text-disabled);margin-top:48px;padding-top:24px;border-top:1px solid var(--border-subtle)">
+  <span>Design Code v2.7.0 · 2026-05-19 · Phase 2.7 — Settings flow, Provisioning, Plan Edit hatch, form validation</span>
+</div>
+
+</body>
+</html>

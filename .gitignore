@@ -1,0 +1,23 @@
+# Editor / OS noise
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# Local-only Claude configs
+.claude/
+
+# Env / secrets (don't commit any of these)
+.env
+.env.*
+!.env.example
+
+# Build / deps (if anyone adds a build step later)
+node_modules/
+dist/
+build/
+
+# Local dev server logs
+*.log
+/tmp/
