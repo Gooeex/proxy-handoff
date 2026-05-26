@@ -21,9 +21,38 @@ The platform has **two surfaces** that share a single backend and database:
 ## Build target
 
 - **Hosting:** Railway
-- **Database + Auth + Storage:** Supabase (Postgres) — strongly recommended for fast iteration on auth + RLS; backend dev has discretion on the frontend stack
+- **Database + Auth + Storage:** Supabase (Postgres) — strongly recommended for fast iteration on auth + RLS; backend dev has discretion on the frontend stack within the constraints below
 - **Frontends:** production SPAs (admin + client) connected to the same backend
 - **Source of truth:** backend / database. Frontends are views, not models.
+
+## Frontend stack constraints — pixel-perfect requirement
+
+The prototypes are the canonical visual + interaction spec. The shipped product must match them 1:1 — same dimensions, paddings, colors, transitions, hover/focus/active states, spacing rhythm. To make that achievable:
+
+### Allowed
+
+- **Vanilla CSS** — preferred. The CSS in the prototypes is already production-shaped: lift it as-is.
+- **CSS Modules / styled-components / vanilla-extract / Emotion** — fine, provided every value is copied verbatim from the prototype.
+- **Tailwind** — allowed *only* if every token in `tailwind.config.{js,ts}` is hardcoded from the prototype's `:root` block (no Tailwind defaults for colors, spacing, radii, font sizes — those are wrong and will diverge).
+
+### Forbidden
+
+- **No opinionated UI kits.** No MUI / Material-UI, Chakra, Ant Design, Mantine, Radix Themes, Bootstrap, Bulma, daisyUI, NextUI, shadcn-with-defaults, etc. They impose their own tokens and component geometry and the result will not be pixel-perfect. Unstyled primitives (Radix UI Primitives, Headless UI, React Aria) are fine because they ship no visuals.
+- **No "improvements"** to spacing, type sizes, radii, border colors, hover states, focus rings, or transitions. If a value looks off, file `question:design` — do not silently edit.
+- **No reinvented animations.** Transitions in the prototype are short (`120ms`) on `border-color` / `transform` / `color`. Copy them; do not extend.
+- **No icon-set swaps.** Icons in the prototypes are inline SVG (Lucide outline, 16×16, stroke-width 1.5). Use the same set.
+
+### Workflow
+
+Open the relevant prototype in Chrome → DevTools → Inspect the target element → copy Computed styles → port into your stack. The prototype is the source of truth; the dev's own taste is not. If the prototype is ambiguous (two states look similar, an interaction is unclear), open an issue tagged `question:design` instead of guessing.
+
+### Token migration
+
+The `:root` block at the top of `prototypes/client-panel.html` (lines 19–89) and `prototypes/admin-panel.html` (lines 19–55) carries every token. Lift them as-is into a single `tokens.css` (or framework-native equivalent) and reference them everywhere. **Do not redefine tokens per-component.** Admin and client portals have meaningfully different palettes — see `prototypes/design-system-reference.html` §7 ("Client portal deltas") for the comparison table.
+
+### Visual regression gate
+
+Every PR that touches a list / detail / form page includes side-by-side screenshots (prototype vs implementation) at desktop (1440px) and mobile (375px). Reference shots live in `screenshots/` and should be refreshed when the prototype changes. The PR template enforces this via the "Side-by-side with the prototype" checkbox.
 
 ## Source files
 

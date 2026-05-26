@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin route bootstrap — capture helper</title>
+<!--
+  Helper page for capture-screenshots.sh.
+  The admin prototype's hash router is mock-ish — it doesn't auto-navigate on
+  hash change at load. This page loads admin-panel.html inside a full-window
+  iframe and calls go(<route>) once it's ready, so headless Chrome captures
+  the requested route instead of always the default dashboard.
+
+  Internal tool only — do NOT link from index.html.
+-->
+<style>
+  html, body { margin: 0; padding: 0; height: 100vh; width: 100%; overflow: hidden; }
+  iframe { border: 0; width: 100%; height: 100vh; display: block; background: #11141d; }
+</style>
+</head>
+<body>
+<iframe id="f" src="../prototypes/admin-panel.html"></iframe>
+<script>
+  var route = new URLSearchParams(location.search).get('r') || 'dashboard';
+  var frame = document.getElementById('f');
+  frame.addEventListener('load', function () {
+    // Wait one tick so the prototype's IIFEs finish wiring up.
+    setTimeout(function () {
+      try {
+        frame.contentWindow.go(route, null, { structural: true });
+      } catch (e) {
+        console.error('go() failed:', e);
+      }
+    }, 50);
+  });
+</script>
+</body>
+</html>

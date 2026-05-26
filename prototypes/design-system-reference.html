@@ -656,6 +656,7 @@
     <a href="#s4">4 · Patterns</a>
     <a href="#s5">5 · Dashboard-local exceptions</a>
     <a href="#s6">6 · Migration plan</a>
+    <a href="#s7">7 · Client portal deltas</a>
   </div>
 </nav>
 
@@ -1886,8 +1887,148 @@
   </div>
 </section>
 
+<!-- ════════════════════════════════════════════════════════════════════
+     §7 CLIENT PORTAL DELTAS
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="s" id="s7">
+  <div class="s-h">
+    <span class="s-num">§7</span>
+    <h2 class="s-title">Client portal deltas</h2>
+  </div>
+  <p class="s-intro">
+    This document was written for the <strong>admin panel</strong> — dark theme, slate-blue accent, dense
+    operator surfaces. The <strong>client portal</strong> (<code>prototypes/client-panel.html</code>) is built
+    on the same primitives — same <code>.panel</code>, <code>.kv-row</code>, <code>.dt</code> tables,
+    <code>.chip</code>, <code>.widget-list</code>, <code>.timeline</code> components — but with a deliberately
+    different palette and a few component-level deletions. This section enumerates every delta so the
+    implementer doesn't have to diff two 15k-line files by hand. <strong>Treat the admin-panel sections (§1–§6
+    above) as the baseline; apply the deltas below for the client portal surfaces.</strong>
+  </p>
+
+  <!-- 7.1 PALETTE DELTAS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">7.1</span> Color token deltas</h3>
+    <p class="ss-desc">
+      The admin panel uses a dark theme (charcoal surface, slate-blue accent). The client portal uses a
+      warm light theme (cream surface, warm-gold accent for decoration, slate-blue CTA for primary actions —
+      a deliberate two-accent split that admin doesn't have). All token <em>names</em> are preserved; only
+      values change. CSS that consumes tokens (every component above) transfers without modification.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th>Token</th><th>Admin (this doc)</th><th>Client portal</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">--bg</td><td class="mono">#11141d</td><td class="mono">#F4F2EE</td><td>Page background — dark charcoal vs warm cream</td></tr>
+        <tr><td class="mono">--surface</td><td class="mono">#1a1f2c</td><td class="mono">#FAF8F4</td><td>Panel / card / KPI bg</td></tr>
+        <tr><td class="mono">--surface-2</td><td class="mono">#232938</td><td class="mono">#EFEAE2</td><td>Inputs, tooltip, help-tip badge</td></tr>
+        <tr><td class="mono">--surface-3</td><td class="mono">#2c3344</td><td class="mono">#DAD6CC</td><td>Sidebar active item bg</td></tr>
+        <tr><td class="mono">--bg-hover</td><td class="mono">#2a3142</td><td class="mono">#E8E2D6</td><td>Row / nav hover</td></tr>
+        <tr><td class="mono">--border</td><td class="mono">#353c4f</td><td class="mono">#DAD6CC</td><td>Panel borders</td></tr>
+        <tr><td class="mono">--border-subtle</td><td class="mono">#2a3142</td><td class="mono">rgba(218,214,204,.55)</td><td>Inset row dividers</td></tr>
+        <tr><td class="mono">--border-strong</td><td class="mono">#475068</td><td class="mono">#8190A1</td><td>Hover border, tooltip</td></tr>
+        <tr><td class="mono">--text</td><td class="mono">#f0f3f9</td><td class="mono">#111827</td><td>Primary text · KPI value</td></tr>
+        <tr><td class="mono">--text-secondary</td><td class="mono">#c2cadd</td><td class="mono">#1F2A3F</td><td>Body cells · widget labels</td></tr>
+        <tr><td class="mono">--muted</td><td class="mono">#9ba4ba</td><td class="mono">#8190A1</td><td>Headers · numerics · counts</td></tr>
+        <tr><td class="mono">--text-disabled</td><td class="mono">#69718a</td><td class="mono">rgba(129,144,161,.65)</td><td>Panel-title · KPI-label</td></tr>
+        <tr><td class="mono">--accent</td><td class="mono">#5b8cff <span class="no">slate-blue</span></td><td class="mono">#B58A4A <span class="yes">warm gold</span></td><td>Decorative: panel dots, KPI accent bars, sidebar active bar. <strong>Not used for primary actions on client.</strong></td></tr>
+        <tr><td class="mono">--accent-text</td><td class="mono">— (uses <code>--accent</code>)</td><td class="mono">#856330</td><td><strong>Client-only:</strong> deeper gold for inline entity links (.td-link). Clears WCAG AA on cream (~4.98:1).</td></tr>
+        <tr><td class="mono">--cta</td><td class="mono">— (uses <code>--accent</code>)</td><td class="mono">#5E78A6</td><td><strong>Client-only token.</strong> Slate-blue for primary actions: buttons, logo dot, hero affordances. Admin folds CTAs into <code>--accent</code>; client splits them out.</td></tr>
+        <tr><td class="mono">--success</td><td class="mono">#3ccf8e</td><td class="mono">#3F8F66</td><td>Retuned warmer / deeper for light-bg contrast</td></tr>
+        <tr><td class="mono">--warning</td><td class="mono">#ffb84d</td><td class="mono">#A87A33</td><td>Same — light-bg retune</td></tr>
+        <tr><td class="mono">--danger</td><td class="mono">#ef4444</td><td class="mono">#B8453F</td><td>Same — light-bg retune</td></tr>
+        <tr><td class="mono">--violet</td><td class="mono">#a78bfa</td><td class="mono">#8B6E9D</td><td>Same — light-bg retune</td></tr>
+      </tbody>
+    </table>
+    <p class="ss-desc" style="margin-top:14px">
+      <strong>The two-accent split is the key client portal pattern.</strong> Warm gold <code>--accent</code>
+      is decorative-only: panel-action links, KPI accent bars, sidebar active indicator. Slate-blue
+      <code>--cta</code> is for everything the user clicks to act: primary buttons, logo, hero affordances.
+      Admin doesn't have this split — it uses <code>--accent</code> for both. Do not collapse them on the
+      client; the visual hierarchy depends on the separation.
+    </p>
+  </div>
+
+  <!-- 7.2 GEOMETRY DELTAS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">7.2</span> Geometry deltas</h3>
+    <p class="ss-desc">
+      Layout shell sizes match. Page width is explicit on the client portal; admin uses full-bleed page
+      slots. Radii, sidebar width, topbar height, aside width are identical — no need to redefine.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th>Token</th><th>Admin</th><th>Client portal</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">--sidebar-w</td><td class="mono">220px</td><td class="mono">220px</td><td>Identical</td></tr>
+        <tr><td class="mono">--topbar-h</td><td class="mono">60px</td><td class="mono">60px</td><td>Identical</td></tr>
+        <tr><td class="mono">--aside-w</td><td class="mono">320px</td><td class="mono">320px</td><td>Identical</td></tr>
+        <tr><td class="mono">--page-w</td><td class="mono">— (full-bleed)</td><td class="mono">calc(1080px + 16px + var(--aside-w)) = <strong>1416px</strong></td><td><strong>Client-only.</strong> Centered page max-width. Per-page overrides: <code>/checkout</code>, <code>/settings</code> → <code>1280px</code>.</td></tr>
+        <tr><td class="mono">--radius-sm / md / lg</td><td class="mono">6 / 10 / 14 px</td><td class="mono">6 / 10 / 14 px</td><td>Identical</td></tr>
+        <tr><td class="mono">--table-edge-cap</td><td class="mono">32px</td><td class="mono">32px</td><td>Identical — table edge padding</td></tr>
+        <tr><td class="mono">--row-divider-inset</td><td class="mono">20px</td><td class="mono">20px</td><td>Identical — kv-row rhythm</td></tr>
+        <tr><td>Anchor tokens (--anchor-id / -date / -status / -text)</td><td class="mono">same scale</td><td class="mono">164 / 164 / 144 / 168 px</td><td>Same anchor system; same widths.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 7.3 COMPONENT DELTAS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">7.3</span> Component deltas</h3>
+    <p class="ss-desc">
+      Components in §3 above are admin-leaning. The client portal uses a subset. Below is every meaningful
+      add/drop/change.
+    </p>
+    <table class="pat-table">
+      <thead><tr><th style="width:200px">Component</th><th style="width:90px">Admin</th><th style="width:90px">Client</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Bulk-bar</strong> (§3.9)</td><td><span class="yes">✓ used</span></td><td><span class="no">— omitted</span></td><td>Client portal has no multi-row admin operations. Selection checkboxes (<code>.col-chk</code>) are absent from client tables. Drop the <code>.bulk-bar</code> markup and CSS entirely on the client side.</td></tr>
+        <tr><td><strong>KPI strip</strong></td><td><span class="yes">✓ 4-card grid</span></td><td><span class="yes">✓ slimmer</span></td><td>Client uses fewer cards (typically 3) and a narrower aspect. Same <code>.kpi-card</code> primitive, same accent-bar treatment. See client Dashboard for canon.</td></tr>
+        <tr><td><strong>Sidebar item count</strong></td><td>9 items</td><td>5 items + Settings in footer</td><td>Client nav: Dashboard / Proxies / Orders / Billing — plus <strong>My Settings</strong> pinned in the sidebar footer (separated by a dashed rule). No "Coming next" v2 stubs in dev-handoff copy.</td></tr>
+        <tr><td><strong>Sidebar logo</strong></td><td>Static</td><td>Pulsing accent dot</td><td>Client logo has a small animated CTA-colored dot. Centered. Decorative.</td></tr>
+        <tr><td><strong>Topbar — balance chip</strong></td><td><span class="no">— absent</span></td><td><span class="yes">✓ present</span></td><td>Client-only. Left-aligned in topbar. Click → <code>/billing</code> deposit flow. See <code>renderTopbar</code> in client-panel.html.</td></tr>
+        <tr><td><strong>Topbar — notifications</strong></td><td>Center / right</td><td>Right-aligned</td><td>Visual nudge only — same bell icon, same dropdown shape.</td></tr>
+        <tr><td><strong>Topbar — sign-out</strong></td><td>Profile menu</td><td>Sidebar footer icon</td><td>Client has an explicit sign-out icon in the sidebar footer (next to Settings). Larger hit area than admin's profile-menu option.</td></tr>
+        <tr><td><strong>Bulk-action chip</strong></td><td><span class="yes">✓</span></td><td><span class="no">—</span></td><td>Tied to bulk-bar — also dropped on client.</td></tr>
+        <tr><td><strong>Tier badge (VIP / Pro)</strong></td><td><span class="no">—</span></td><td><span class="yes">✓ Profile header</span></td><td>Client-only — small chip on Profile header indicating account tier. Uses <code>--accent</code> warm gold.</td></tr>
+        <tr><td><strong>Stage 1.5 badge</strong></td><td><span class="no">—</span></td><td><span class="yes">✓ amber pill</span></td><td>Client-only — marks UI surfaces whose backend isn't wired. See <code>DEV_BRIEF.md § "Stage 1.5"</code> for the 5 marked locations. Format: <code>.stage15-badge</code> amber pill with hover tooltip describing the missing contract.</td></tr>
+        <tr><td><strong>Tables (.dt)</strong></td><td><span class="yes">✓ filters + sort + selection</span></td><td><span class="yes">✓ read + tab-filter only</span></td><td>Same <code>.dt</code> primitive, same anchor system, same colgroup discipline. Client drops: selection column, admin-only sort menus, advanced filters. Tab-based status filtering is kept.</td></tr>
+        <tr><td><strong>Backlink stack</strong></td><td><span class="yes">✓ admin canon</span></td><td><span class="yes">✓ ported 1:1</span></td><td>Client uses the same <code>.backlink</code> + back-navigation stack as admin (ported during Phase 1 client work, see Task #17 in repo backlog). Same visual, same behavior.</td></tr>
+        <tr><td><strong>Activity timeline</strong></td><td><code>.timeline</code> (full)</td><td><code>.timeline-mini</code> + scroll modifier</td><td>Client uses a denser, scrollable variant: <code>.timeline-mini.activity-scroll</code> (max-height 254px on order-detail, 214px on dashboard widget). Same dot/body/stamp 3-col grid.</td></tr>
+        <tr><td><strong>Order detail layout</strong></td><td>2-col grid-detail (left stack + right aside)</td><td>Snapshot full-width + 2-col split (Activity + Proxies) + right aside (Lifecycle)</td><td>Client portal Order Detail uses a distinct geometry. See <code>renderOrderDetail</code> in client-panel.html. Reference for any new detail-page layout work.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 7.4 BEHAVIOR DELTAS -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">7.4</span> Behavior deltas</h3>
+    <ul style="color:var(--text-secondary);font-size:13px;line-height:1.7;padding-left:22px;margin:0">
+      <li><strong>Read-only state, intent-form writes.</strong> Admin mutates orders / payments / proxies directly. Client never mutates state — it submits intents (renewal request, replacement request, cancel request, support ticket) and the backend authorizes + executes. See <code>DEV_BRIEF.md § Critical implementation principles</code>.</li>
+      <li><strong>No audit log surface.</strong> Audit log is admin-only. Client portal must never expose audit entries, plan <code>internal_name</code>, or other clients' data.</li>
+      <li><strong>Per-client data isolation.</strong> Enforced at API layer + Supabase RLS keyed off <code>auth.uid()</code>. Client tables / detail pages display only the current user's records.</li>
+      <li><strong>Credentials reveal.</strong> Proxy credentials hidden by default; explicit "reveal" affordance (per-row eye icon). Reveal action audited (admin gets a log entry).</li>
+      <li><strong>Renewal flow.</strong> Client triggers via <code>Renew now</code> / <code>Renew</code> button on Order Detail; flow lands in checkout shell. Auto-renew toggle persists to backend.</li>
+      <li><strong>Deposit / topup.</strong> Client portal has a full checkout shell for balance topup (admin doesn't). Entry points: topbar balance chip, Account balance card in <code>/billing</code>.</li>
+      <li><strong>Stage 1.5 surfaces.</strong> 5 client portal surfaces have UI but no backend (Account balance / Invoice column / Whitelist / Rotation URL / Auto rotation kv). Marked with amber <code>.stage15-badge</code>. <strong>Do not remove a badge until the backend ships + integration test passes.</strong></li>
+    </ul>
+  </div>
+
+  <!-- 7.5 IMPLEMENTATION NOTE -->
+  <div class="ss">
+    <h3 class="ss-h"><span class="ss-num">7.5</span> Implementation order</h3>
+    <p class="ss-desc">
+      When building the client portal: <strong>start by lifting the <code>:root</code> block from
+      <code>prototypes/client-panel.html</code> (lines 19–89)</strong> into a <code>tokens.css</code>. Every
+      component CSS rule consumes tokens — once <code>tokens.css</code> is right, components above (§3)
+      transfer with no per-component edits, just by serving them against the new tokens. Then layer the
+      §7.3 deletions (no bulk-bar) and §7.3 additions (topbar balance chip, tier badge, stage15 badge,
+      sidebar footer). The two-accent split (<code>--accent</code> gold for decorative, <code>--cta</code>
+      slate-blue for actions) must be respected from day one — retrofitting it later means revisiting
+      every button.
+    </p>
+  </div>
+</section>
+
 <div class="doc-meta" style="justify-content:center;color:var(--text-disabled);margin-top:48px;padding-top:24px;border-top:1px solid var(--border-subtle)">
-  <span>Design Code v2.7.0 · 2026-05-19 · Phase 2.7 — Settings flow, Provisioning, Plan Edit hatch, form validation</span>
+  <span>Design Code v2.7.1 · 2026-05-26 · §7 Client portal deltas added for dev handoff</span>
 </div>
 
 </body>

@@ -49,13 +49,29 @@ Open the two prototypes side-by-side with `DEV_BRIEF.md` and `ADMIN_HANDOFF.md` 
 ├── prototypes/
 │   ├── client-panel.html              ← client portal prototype (canonical UX)
 │   ├── admin-panel.html               ← admin panel prototype (canonical UX)
-│   └── design-system-reference.html   ← design system spec — see note below
+│   └── design-system-reference.html   ← design system spec (see §7 for client deltas)
+├── screenshots/                       ← visual baseline (one PNG per page × viewport)
+│   ├── admin/                         ← admin panel reference shots (1440 + 375)
+│   ├── client/                        ← client portal reference shots (1440 + 375)
+│   ├── design-system/                 ← design system doc reference
+│   └── README.md                      ← how to use + refresh
+├── scripts/
+│   ├── capture-screenshots.sh         ← regenerate screenshots/ via headless Chrome
+│   └── _auth-bootstrap.html           ← client-portal auto-login helper (capture tool)
 └── .github/
-    ├── ISSUE_TEMPLATE/                ← feature.md, bug.md
+    ├── ISSUE_TEMPLATE/                ← feature.md, bug.md, question.md
     └── pull_request_template.md
 ```
 
-> **Note on `design-system-reference.html`:** this file is the design system spec that was originally written for the **admin panel** — most of the components it documents (bulk-bar, `.dt` tables with admin filters, multi-column detail layouts) are admin-side. The **design tokens** (typography ramp, spacing, semantic colors, `.kv-row` rhythm, panel/card primitives) carry over directly to the client portal. The **client portal** uses the same tokens but with a few deliberate adjustments: warmer cream/gold accent palette, narrower max-width per page, slimmer KPI strip, no bulk-bar. Use the admin spec as the foundation, and treat `prototypes/client-panel.html` as the source of truth where the client deviates.
+### Pixel-perfect requirement
+
+The shipped product must match the prototypes 1:1 — same dimensions, paddings, colors, transitions, hover/focus/active states. To make that enforceable:
+
+- **`screenshots/`** holds the visual baseline (PNG per page × viewport). Every PR that touches a page attaches a side-by-side diff against these baselines. See `screenshots/README.md`. Regenerate after any prototype change with `bash scripts/capture-screenshots.sh`.
+- **`DEV_BRIEF.md` § Frontend stack constraints** spells out which frontend stacks are allowed (vanilla CSS / styled-components / Tailwind-with-our-tokens) and which are forbidden (any opinionated UI kit — MUI, Chakra, Ant, etc.). UI kits will fight the prototype's tokens and the result will not be 1:1.
+- **`prototypes/design-system-reference.html` §7 — Client portal deltas** documents the client-vs-admin token differences. The client portal is *not* a recolored admin panel — it splits decorative accent (warm gold `--accent`) from action CTA (slate-blue `--cta`), and the table lays out every divergent value, geometry, and component add/drop.
+
+> **Note on `design-system-reference.html`:** §1–§6 were originally written for the **admin panel** — dark theme, slate-blue accent, dense operator surfaces. §7 (added for the dev handoff) documents the deltas the **client portal** applies on top. Tokens, type ramp, spacing, `.kv-row` rhythm, panel/card primitives carry over directly; palette, page max-width, sidebar count, KPI strip width, bulk-bar (admin-only), topbar balance chip (client-only), and the two-accent split (`--accent` decorative vs `--cta` action) are documented as explicit deltas. Treat the admin spec as the foundation; apply §7 for client surfaces.
 
 ---
 
